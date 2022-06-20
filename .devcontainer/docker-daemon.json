@@ -1,0 +1,19 @@
+{
+    "runtimes": {
+        "runsc": {
+            "path": "/usr/local/bin/runsc",
+            "runtimeArgs": [
+                "--network=none",
+                "--overlay"
+            ]
+        },
+        "runsc-kvm": {
+            "path": "/usr/local/bin/runsc",
+            "runtimeArgs": [
+                "--platform=kvm",
+                "--network=none",
+                "--overlay"
+            ]
+        }
+    }
+}
