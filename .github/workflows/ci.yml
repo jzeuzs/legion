@@ -159,6 +159,9 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
+      - name: Cache docker images
+        uses: satackey/action-docker-layer-caching@v0.0.11
+
       - name: Install cargo-nextest
         uses: taiki-e/install-action@nextest
 
