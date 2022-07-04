@@ -163,7 +163,4 @@ jobs:
         uses: taiki-e/install-action@nextest
 
       - name: Run test
-        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # tag=v1
-        with:
-          command: nextest run
-          args: ${{ matrix.tests }}
+        run: cargo nextest run ${{ matrix.tests }}
