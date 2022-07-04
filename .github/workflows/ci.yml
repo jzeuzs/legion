@@ -18,6 +18,7 @@ jobs:
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@bb6001c4ea612bf59c3abfc4756fbceee4f870c7 # tag=0.10.0
+        continue-on-error: true
         with:
           access_token: ${{ github.token }}
 
@@ -46,6 +47,7 @@ jobs:
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@bb6001c4ea612bf59c3abfc4756fbceee4f870c7 # tag=0.10.0
+        continue-on-error: true
         with:
           access_token: ${{ github.token }}
 
@@ -77,6 +79,7 @@ jobs:
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@bb6001c4ea612bf59c3abfc4756fbceee4f870c7 # tag=0.10.0
+        continue-on-error: true
         with:
           access_token: ${{ github.token }}
 
@@ -113,6 +116,7 @@ jobs:
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@bb6001c4ea612bf59c3abfc4756fbceee4f870c7 # tag=0.10.0
+        continue-on-error: true
         with:
           access_token: ${{ github.token }}
 
@@ -143,6 +147,7 @@ jobs:
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@bb6001c4ea612bf59c3abfc4756fbceee4f870c7 # tag=0.10.0
+        continue-on-error: true
         with:
           access_token: ${{ github.token }}
 
