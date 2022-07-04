@@ -4,6 +4,7 @@
 #[macro_use]
 extern crate rocket;
 
+use std::env;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -49,6 +50,10 @@ async fn main() -> Result<(), rocket::Error> {
     if config.prepare_containers {
         docker::prepare_containers(&config.language.enabled, &config.language)
             .expect("Failed preparing containers");
+    }
+
+    if let Some(port) = config.port {
+        env::set_var("ROCKET_PORT", port.to_string());
     }
 
     let config = Arc::new(config);

@@ -1,8 +1,8 @@
 use anyhow::{Error, Result};
 use rocket::serde::{json, Deserialize, Serialize};
 
-#[derive(Clone, Default, Deserialize, Serialize)]
-#[serde(crate = "rocket::serde")]
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(crate = "rocket::serde", rename_all = "kebab-case")]
 pub struct Config {
     #[serde(default)]
     pub language: Language,
@@ -12,12 +12,14 @@ pub struct Config {
     pub cleanup_interval: f64,
     #[serde(default)]
     pub cache: Cache,
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub update_images: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
-#[serde(crate = "rocket::serde")]
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(crate = "rocket::serde", rename_all = "kebab-case")]
 pub struct Language {
     pub enabled: Vec<String>,
     #[serde(default = "default_memory")]
@@ -32,8 +34,8 @@ pub struct Language {
     pub retries: u8,
 }
 
-#[derive(Clone, Default, Deserialize, Serialize)]
-#[serde(crate = "rocket::serde")]
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(crate = "rocket::serde", rename_all = "kebab-case")]
 pub struct Cache {
     #[serde(default = "default_true")]
     pub enabled: bool,
@@ -54,6 +56,43 @@ impl Config {
     #[inline]
     pub fn stringify(&self) -> Result<String> {
         json::to_string(self).map_err(Error::msg)
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            prepare_containers: true,
+            cleanup_interval: 10.0,
+            update_images: true,
+            cache: Cache::default(),
+            language: Language::default(),
+            port: None,
+        }
+    }
+}
+
+impl Default for Language {
+    fn default() -> Self {
+        Language {
+            enabled: Vec::with_capacity(0),
+            memory: 256,
+            cpus: 0.25,
+            runtime: String::from("runc"),
+            timeout: 30.0,
+            retries: 3,
+        }
+    }
+}
+
+impl Default for Cache {
+    fn default() -> Self {
+        Cache {
+            enabled: true,
+            time_to_live: 300.0,
+            time_to_idle: 60.0,
+            max_capacity: 10_000,
+        }
     }
 }
 

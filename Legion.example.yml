@@ -1,0 +1,49 @@
+# Whether to prepare containers on startup.
+prepare-containers: true
+
+# Interval in minutes to kill all legion-related running containers.
+cleanup-interval: 10
+
+# Whether to update legion-related images on startup.
+update-images: true
+
+# Port to run Legion on.
+port: 3000
+
+# Language-related configuration.
+language:
+  # The languages to enable.
+  # The names of the languages are as in the `languages` folder.
+  enabled:
+    - javascript
+    - rust
+    - c
+
+  # The OCI runtime to use when running a container.
+  runtime: runc
+
+  # The maximum memory & memory-swap of a container in megabytes.
+  memory: 256
+
+  # The number of CPUs to use.
+  cpus: 0.25
+
+  # Time in seconds for an evaluation before the container will exit.
+  timeout: 30
+
+  # The maximum number of retries when the evaluation fails for a non-timeout related cause.
+  retries: 3
+
+# Cache-related configuration.
+cache:
+  # If you want to enable the cache.
+  enabled: true
+
+  # The Time-To-Live (TTL, in minutes) of a cache entry.
+  time-to-live: 300
+
+  # The Time-To-Idle (TTI, in minutes) of a cache entry.
+  time-to-idle: 60
+
+  # The maximum capacity of the cache.
+  max-capacity: 10000
