@@ -54,7 +54,12 @@ pub fn start_container(language: &str, config: &Language) -> Result<()> {
         output.status.success(),
         "Starting container {} failed: {}",
         image.bold().underline(),
-        String::from_utf8_lossy(&output.stdout).bright_red()
+        String::from_utf8_lossy(if output.stderr.is_empty() {
+            &output.stdout
+        } else {
+            &output.stderr
+        })
+        .bright_red()
     );
 
     Ok(())
