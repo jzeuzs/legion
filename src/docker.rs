@@ -32,13 +32,13 @@ pub fn exec(args: &[&str]) -> Result<Output> {
 ///
 /// - When starting the container fails.
 pub fn start_container(language: &str, config: &Language) -> Result<()> {
-    let image = format!("legion-{language}");
+    let image = format!("legion-{}", language);
 
     let output = exec(&[
         "run",
         &format!("--runtime={}", config.runtime),
         "--rm",
-        &format!("--name={image}"),
+        &format!("--name={}", image),
         "-u1000:1000",
         "-w/tmp/",
         "-dt",
@@ -69,16 +69,22 @@ pub fn build_images(languages: &[String], update_images: bool) -> Result<()> {
     info!("{}", "Building images...".blue());
 
     let build_image = |language: &String| {
-        let output = &exec(&["images", "-q", &format!("legion-{language}")])
+        let output = &exec(&["images", "-q", &format!("legion-{}", language)])
             .expect("Failed checking images");
 
         let is_image_present = String::from_utf8_lossy(&output.stdout);
 
         if is_image_present.trim().is_empty() || update_images {
-            info!("Building image {}...", format!("legion-{language}").bold().underline());
-            exec(&["build", "-t", &format!("legion-{language}"), &format!("languages/{language}")])
-                .expect("Failed building image");
-            info!("Finished building image {}.", format!("legion-{language}").bold().underline());
+            info!("Building image {}...", format!("legion-{}", language).bold().underline());
+            exec(&[
+                "build",
+                "-t",
+                &format!("legion-{}", language),
+                &format!("languages/{}", language),
+            ])
+            .expect("Failed building image");
+
+            info!("Finished building image {}.", format!("legion-{}", language).bold().underline());
         }
     };
 
@@ -107,10 +113,10 @@ pub fn prepare_containers(languages: &[String], config: &Language) -> Result<()>
         if container_exists {
             warn!(
                 "{}",
-                format!("Container legion-{language} already exists. Restarting.").bright_red()
+                format!("Container legion-{} already exists. Restarting.", language).bright_red()
             );
 
-            exec(&["kill", &format!("legion-{language}")])?;
+            exec(&["kill", &format!("legion-{}", language)])?;
             start_container(language, config)?;
         } else {
             start_container(language, config)?;
@@ -129,9 +135,9 @@ pub fn prepare_containers(languages: &[String], config: &Language) -> Result<()>
 /// - When killing the container fails.
 pub fn kill_containers(languages: &[String]) -> Result<()> {
     let kill_container = |language: &String| -> Result<()> {
-        info!("Killing container {}...", format!("legion-{language}").bold().underline());
-        exec(&["kill", &format!("legion-{language}")])?;
-        info!("Killed container {}.", format!("legion-{language}").bold().underline());
+        info!("Killing container {}...", format!("legion-{}", language).bold().underline());
+        exec(&["kill", &format!("legion-{}", language)])?;
+        info!("Killed container {}.", format!("legion-{}", language).bold().underline());
 
         Ok(())
     };
@@ -147,5 +153,5 @@ pub fn kill_containers(languages: &[String]) -> Result<()> {
 ///
 /// - When the Docker CLI is not on your `PATH`.
 pub fn container_exists(language: &str) -> Result<bool> {
-    Ok(exec(&["top", &format!("legion-{language}")])?.status.success())
+    Ok(exec(&["top", &format!("legion-{}", language)])?.status.success())
 }
