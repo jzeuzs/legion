@@ -1,7 +1,6 @@
 #!/bin/sh
 
-printf %s"\n" "$1" > program.cs
-csc -nologo program.cs 2>/dev/null
+printf %s"\n" "$1" > program.csx
 echo "$2" > .input
 shift
-mono program.exe "$@" < .input
+dotnet script program.csx < .input
