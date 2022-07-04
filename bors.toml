@@ -1,3 +1,5 @@
+commit_title = "chore: merge ${PR_REFS}"
+
 status = [
     "Rustfmt",
     "Clippy",
