@@ -1,5 +1,6 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "extends": ["config:base", "helpers:pinGitHubActionDigests", "group:allNonMajor"],
-    "labels": ["Meta: Dependencies"]
+    "labels": ["Meta: Dependencies"],
+    "ignoreDeps": ["python"]
 }
