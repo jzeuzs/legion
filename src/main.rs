@@ -43,7 +43,8 @@ async fn main() -> Result<(), rocket::Error> {
         .try_deserialize()
         .expect("Deserializing config failed");
 
-    docker::build_images(&config.language.enabled, config.update_images).expect("Failed building images");
+    docker::build_images(&config.language.enabled, config.update_images)
+        .expect("Failed building images");
 
     if config.prepare_containers {
         docker::prepare_containers(&config.language.enabled, &config.language)
