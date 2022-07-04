@@ -95,15 +95,21 @@ pub async fn eval(
         }
     }
 
-    exec(&["exec", &format!("legion-{}", payload.language), "mkdir", "-p", &format!("eval/{uid}")])
-        .map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
+    exec(&[
+        "exec",
+        &format!("legion-{}", payload.language),
+        "mkdir",
+        "-p",
+        &format!("eval/{}", uid),
+    ])
+    .map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
 
     exec(&[
         "exec",
         &format!("legion-{}", payload.language),
         "chmod",
         "777",
-        &format!("eval/{uid}"),
+        &format!("eval/{}", uid),
     ])
     .map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
 
@@ -153,7 +159,7 @@ pub async fn eval(
         };
     };
 
-    exec(&["exec", &format!("legion-{}", payload.language), "rm", "-rf", &format!("eval/{uid}")])
+    exec(&["exec", &format!("legion-{}", payload.language), "rm", "-rf", &format!("eval/{}", uid)])
         .map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
 
     info!(
@@ -191,7 +197,7 @@ async fn _eval(
         "exec",
         "-u1001:1001",
         "-i",
-        &format!("-w/tmp/eval/{uid}"),
+        &format!("-w/tmp/eval/{}", uid),
         &format!("legion-{}", language),
         "/bin/sh",
         "/var/run/run.sh",
