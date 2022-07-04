@@ -2,7 +2,7 @@ use anyhow::{Error, Result};
 use rocket::serde::{json, Deserialize, Serialize};
 
 #[derive(Clone, Default, Deserialize, Serialize)]
-#[serde(crate = "rocket::serde")]
+#[serde(crate = "rocket::serde", rename_all = "kebab-case")]
 pub struct Config {
     #[serde(default)]
     pub language: Language,
@@ -12,12 +12,14 @@ pub struct Config {
     pub cleanup_interval: f64,
     #[serde(default)]
     pub cache: Cache,
-    #[serde(default)]
+    #[serde(default = "default_true")]
     pub update_images: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub port: Option<u16>,
 }
 
 #[derive(Clone, Default, Deserialize, Serialize)]
-#[serde(crate = "rocket::serde")]
+#[serde(crate = "rocket::serde", rename_all = "kebab-case")]
 pub struct Language {
     pub enabled: Vec<String>,
     #[serde(default = "default_memory")]
@@ -33,7 +35,7 @@ pub struct Language {
 }
 
 #[derive(Clone, Default, Deserialize, Serialize)]
-#[serde(crate = "rocket::serde")]
+#[serde(crate = "rocket::serde", rename_all = "kebab-case")]
 pub struct Cache {
     #[serde(default = "default_true")]
     pub enabled: bool,
