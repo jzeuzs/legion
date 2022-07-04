@@ -136,7 +136,7 @@ jobs:
 
   test:
     needs: prepare-tests
-    name: Integration Tests
+    name: Tests
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.prepare-tests.outputs.matrix) }}
