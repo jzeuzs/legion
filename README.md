@@ -1,2 +1,2 @@
 # legion
-arbitrary code execution server using docker (for esolangs)
+arbitrary code execution server using docker

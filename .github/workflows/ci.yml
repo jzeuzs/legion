@@ -1,0 +1,169 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+      # For Bors
+      - staging
+      - trying
+  schedule:
+    cron: '00 04 * * *'
+  pull_request:
+
+jobs:
+  fmt:
+    name: Rustfmt
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout the Repository
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # tag=v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+
+      - name: Install rustfmt
+        run: rustup component add rustfmt
+
+      - name: Run rustfmt
+        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # tag=v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout the Repository
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # tag=v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Install clippy
+        run: rustup component add clippy
+
+      - name: Run clippy
+        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # tag=v1
+        with:
+          command: clippy
+          args: -- -D warnings
+  
+  msrv:
+    name: MSRV
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout the Repository
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # tag=v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      - name: Install cargo-msrv
+        run: cargo install cargo-msrv
+
+      - name: Install jsonlines
+        run: cargo install jsonlines
+
+      - name: Run cargo-msrv
+        run: cargo msrv --output-format json verify | jsonlines-tail | jq --exit-status .success
+
+  prepare-tests:
+    name: Prepare Tests
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.prepare.outputs.matrix }}
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout the Repository
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # tag=v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Prepare tests
+        id: prepare
+        run: |
+          echo "::set-output name=matrix::{\"tests\":[\"$(cargo test -q -- --list --format=terse | sed -z 's/: test\n/\", \"/g' | sed 's/...$//')]}"
+
+  test:
+    needs: prepare-tests
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.prepare-tests.outputs.matrix) }}
+    steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.9.1
+        with:
+          access_token: ${{ github.token }}
+
+      - name: Checkout the Repository
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # tag=v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Run test
+        uses: actions-rs/cargo@844f36862e911db73fe0815f00a4a2602c279505 # tag=v1
+        with:
+          command: nextest run
+          args: ${{ matrix.tests }}
