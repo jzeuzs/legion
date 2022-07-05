@@ -314,6 +314,7 @@ mod test {
         ruby, "ruby.rb";
         rust, "rust.rs";
         shakespeare, "shakespeare.spl";
+        sqlite, "sqlite.sql";
         typescript, "typescript.ts";
     }
 }
