@@ -9,7 +9,7 @@ use rocket::serde::{Deserialize, Serialize};
 use rocket::tokio::process::Command;
 use rocket::tokio::time::{sleep, Duration};
 use rocket::{tokio, State};
-use rustflake::Snowflake;
+use snowflake::ProcessUniqueId;
 
 use crate::docker::{container_exists, exec, start_container};
 use crate::{Cache, Config};
@@ -54,7 +54,7 @@ pub async fn eval(
         ));
     }
 
-    let uid = Snowflake::default().generate();
+    let uid = ProcessUniqueId::new().to_string();
     let container_present = container_exists(&payload.language)
         .map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
 
@@ -131,7 +131,7 @@ pub async fn eval(
 
                 return Err(Custom(Status::GatewayTimeout, "Eval timed out".to_owned()));
             },
-            output = _eval(&payload.language, &payload.code, &payload.input, &payload.args, uid) => {
+            output = _eval(&payload.language, &payload.code, &payload.input, &payload.args, &uid) => {
                 match output {
                     Ok(output)  => {
                         if success || output.status.success() {
@@ -189,7 +189,7 @@ async fn _eval(
     code: &str,
     input: &str,
     args: &[String],
-    uid: i64,
+    uid: &str,
 ) -> Result<Output> {
     let mut cmd = Command::new("docker");
 
