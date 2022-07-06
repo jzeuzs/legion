@@ -1,0 +1,37 @@
+[
+    {
+        "type": "feat",
+        "section": "🚀 Features",
+        "hidden": false
+    },
+    {
+        "type": "fix",
+        "section": "🐛 Bug Fixes",
+        "hidden": false
+    },
+    {
+        "type": "docs",
+        "section": "📝 Documentation",
+        "hidden": false
+    },
+    {
+        "type": "perf",
+        "section": "🏃 Performance",
+        "hidden": false
+    },
+    {
+        "type": "refactor",
+        "section": "🏠 Refactor",
+        "hidden": false
+    },
+    {
+        "type": "style",
+        "section": "🪞 Styling",
+        "hidden": false
+    },
+    {
+        "type": "test",
+        "section": "🧪 Testing",
+        "hidden": false
+    }
+]

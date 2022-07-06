@@ -14,11 +14,20 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: google-github-actions/release-please-action@b910fcea1279e7744f01ca9c82f79502240ccf7c # tag=v3
+      - name: Checkout the Repository
+        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3
+
+      - name: Get Changelog Types
+        id: get-changelog-types
+        run: echo "::set-output name=changelog-types::$(cat .github/changelog-types.json)"
+
+      - name: Release Please
+        uses: google-github-actions/release-please-action@b910fcea1279e7744f01ca9c82f79502240ccf7c # tag=v3
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           release-type: rust
+          changelog-types: ${{ steps.get-changelog-types.outputs.changelog-types }}
 
   github_build:
     name: Build release binaries
