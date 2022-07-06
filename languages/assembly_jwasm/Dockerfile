@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine as build
 
 RUN apk add --no-cache build-base cmake git && \
     git clone https://github.com/JWasm/JWasm.git && \
@@ -6,7 +6,10 @@ RUN apk add --no-cache build-base cmake git && \
     mkdir build && \
     cd build && \
     cmake .. && \
-    make && \
-    ln -s /JWasm/build/jwasm /usr/bin
+    make
 
+FROM alpine
+
+RUN apk add --no-cache binutils
+COPY --from=build /JWasm/build/jwasm /usr/local/bin
 COPY run.sh /var/run

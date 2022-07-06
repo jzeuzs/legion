@@ -317,6 +317,7 @@ mod test {
         ruby, "ruby.rb";
         rust, "rust.rs";
         shakespeare, "shakespeare.spl";
+        spim, "spim.s";
         sqlite, "sqlite.sql";
         typescript, "typescript.ts";
     }
