@@ -14,7 +14,7 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: google-github-actions/release-please-action@0fef4afcc574a384e0d8cee69de13e864b80dc6f # tag=v3
+      - uses: google-github-actions/release-please-action@b910fcea1279e7744f01ca9c82f79502240ccf7c # tag=v3
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
