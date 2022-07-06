@@ -159,6 +159,12 @@ jobs:
         with:
           install: true
 
+      - name: Build Image
+        run: |
+          NAME_ARR=($(echo "${{ matrix.tests }}" | tr "::" "\n"))
+          NAME=${NAME_ARR[-1]}
+          docker build -t legion-$NAME languages/$NAME
+
       - name: Install Rust
         uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # tag=v1
         with:
