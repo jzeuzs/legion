@@ -176,4 +176,4 @@ jobs:
         uses: Swatinem/rust-cache@v1
 
       - name: Run test
-        run: cargo test -- ${{ matrix.tests }}
+        run: cargo test -- ${{ matrix.tests }} --exact
