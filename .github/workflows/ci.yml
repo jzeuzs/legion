@@ -175,8 +175,5 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@v1
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
-
       - name: Run test
-        run: cargo nextest run ${{ matrix.tests }}
+        run: cargo test -- ${{ matrix.tests }}
