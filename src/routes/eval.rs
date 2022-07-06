@@ -290,6 +290,7 @@ mod test {
 
     gen_test! {
         assembly_as, "assembly_as.s";
+        assembly_fasm, "assembly_fasm.s";
         assembly_nasm, "assembly_nasm.s";
         bash, "bash.sh";
         befunge, "befunge.b93";
