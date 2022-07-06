@@ -290,6 +290,9 @@ mod test {
 
     gen_test! {
         assembly_as, "assembly_as.s";
+        assembly_fasm, "assembly_fasm.s";
+        assembly_gcc, "assembly_gcc.s";
+        assembly_jwasm, "assembly_jwasm.s";
         assembly_nasm, "assembly_nasm.s";
         bash, "bash.sh";
         befunge, "befunge.b93";
@@ -314,6 +317,7 @@ mod test {
         ruby, "ruby.rb";
         rust, "rust.rs";
         shakespeare, "shakespeare.spl";
+        spim, "spim.s";
         sqlite, "sqlite.sql";
         typescript, "typescript.ts";
     }
