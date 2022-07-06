@@ -11,4 +11,3 @@ movl $hello,%ecx
 movl $13,%edx
 int $0x80
 ret
-
