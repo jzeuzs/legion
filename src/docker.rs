@@ -70,9 +70,9 @@ pub fn start_container(language: &str, config: &Language) -> Result<()> {
 /// # Errors
 ///
 /// - When the Docker CLI is not on your `PATH`.
-/// 
+///
 /// # Panics
-/// 
+///
 /// - When building the image fails.
 pub fn build_images(languages: &[String], update_images: bool) -> Result<()> {
     info!("{}", "Building images...".blue());
