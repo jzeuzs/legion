@@ -177,3 +177,5 @@ jobs:
 
       - name: Run test
         run: cargo test -- ${{ matrix.tests }} --exact
+        env:
+          LEGION_TEST_BUILD: "0"

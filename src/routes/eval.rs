@@ -249,7 +249,10 @@ mod test {
 
                     let client = Client::tracked(init_server()).unwrap();
 
-                    build_images(&[stringify!($name).to_owned()], true).expect("Failed building images");
+                    if option_env!("LEGION_TEST_BUILD").unwrap_or("0") != "0" {
+                        build_images(&[stringify!($name).to_owned()], true).expect("Failed building images");
+                    }
+
                     prepare_containers(&[stringify!($name).to_owned()], &Language {
                         timeout: 30.0,
                         enabled: vec![stringify!($name).to_owned()],
