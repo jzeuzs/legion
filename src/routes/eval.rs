@@ -320,5 +320,6 @@ mod test {
         spim, "spim.s";
         sqlite, "sqlite.sql";
         typescript, "typescript.ts";
+        zig, "zig.zig";
     }
 }
