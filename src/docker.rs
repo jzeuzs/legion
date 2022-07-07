@@ -70,6 +70,10 @@ pub fn start_container(language: &str, config: &Language) -> Result<()> {
 /// # Errors
 ///
 /// - When the Docker CLI is not on your `PATH`.
+/// 
+/// # Panics
+/// 
+/// - When building the image fails.
 pub fn build_images(languages: &[String], update_images: bool) -> Result<()> {
     info!("{}", "Building images...".blue());
 
@@ -81,13 +85,26 @@ pub fn build_images(languages: &[String], update_images: bool) -> Result<()> {
 
         if is_image_present.trim().is_empty() || update_images {
             info!("Building image {}...", format!("legion-{}", language).bold().underline());
-            exec(&[
+
+            let output = exec(&[
                 "build",
                 "-t",
                 &format!("legion-{}", language),
                 &format!("languages/{}", language),
             ])
             .expect("Failed building image");
+
+            assert!(
+                output.status.success(),
+                "Building image {} failed: {}",
+                format!("legion-{}", language).bold().underline(),
+                String::from_utf8_lossy(if output.stderr.is_empty() {
+                    &output.stdout
+                } else {
+                    &output.stderr
+                })
+                .bright_red()
+            );
 
             info!("Finished building image {}.", format!("legion-{}", language).bold().underline());
         }
