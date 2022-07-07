@@ -83,7 +83,7 @@ pub fn build_images(languages: &[String], update_images: bool) -> Result<()> {
 
         let is_image_present = String::from_utf8_lossy(&output.stdout);
 
-        if is_image_present.trim().is_empty() || update_images {
+        if update_images || is_image_present.trim().is_empty() {
             info!("Building image {}...", format!("legion-{}", language).bold().underline());
 
             let output = exec(&[

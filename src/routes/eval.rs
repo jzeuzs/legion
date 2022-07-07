@@ -296,6 +296,8 @@ mod test {
         assembly_nasm, "assembly_nasm.s";
         bash, "bash.sh";
         befunge, "befunge.b93";
+        brainfuck, "brainfuck.bf";
+        bun, "bun.js";
         c, "c.c";
         cpp, "cpp.cc";
         crystal, "crystal.cr";
