@@ -25,7 +25,7 @@ jobs:
         run: echo "::set-output name=changelog-types::$(cat .github/changelog-types.json | jq -c)"
 
       - name: Release Please
-        uses: google-github-actions/release-please-action@b910fcea1279e7744f01ca9c82f79502240ccf7c # tag=v3
+        uses: google-github-actions/release-please-action@069d7229d7b10308de85bc606a91e0033e259c8e # tag=v3
         id: release
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
