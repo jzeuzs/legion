@@ -316,6 +316,7 @@ mod test {
         julia, "julia.jl";
         lolcode, "lolcode.lol";
         lua, "lua.lua";
+        objective_c, "objective_c.m";
         perl, "perl.pl";
         php, "php.php";
         python, "python.py";
