@@ -10,6 +10,9 @@ update-images = true
 # Port to run Legion on.
 port = 3000
 
+# Whether to skip checking if docker exists.
+skip-docker-check = false
+
 # Language-related configuration.
 [language]
 # The languages to enable.

@@ -16,6 +16,8 @@ pub struct Config {
     pub update_images: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub port: Option<u16>,
+    #[serde(default = "default_false")]
+    pub skip_docker_check: bool,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -68,6 +70,7 @@ impl Default for Config {
             cache: Cache::default(),
             language: Language::default(),
             port: None,
+            skip_docker_check: false,
         }
     }
 }
@@ -96,11 +99,11 @@ impl Default for Cache {
     }
 }
 
-fn default_memory() -> u32 {
+const fn default_memory() -> u32 {
     256
 }
 
-fn default_cpus() -> f64 {
+const fn default_cpus() -> f64 {
     0.25
 }
 
@@ -108,30 +111,34 @@ fn default_runtime() -> String {
     String::from("runc")
 }
 
-fn default_timeout() -> f64 {
+const fn default_timeout() -> f64 {
     30.0
 }
 
-fn default_retries() -> u8 {
+const fn default_retries() -> u8 {
     3
 }
 
-fn default_cleanup_interval() -> f64 {
+const fn default_cleanup_interval() -> f64 {
     10.0
 }
 
-fn default_ttl() -> f64 {
+const fn default_ttl() -> f64 {
     300.0
 }
 
-fn default_tti() -> f64 {
+const fn default_tti() -> f64 {
     60.0
 }
 
-fn default_max_capacity() -> u64 {
+const fn default_max_capacity() -> u64 {
     10_000
 }
 
-fn default_true() -> bool {
+const fn default_true() -> bool {
     true
+}
+
+const fn default_false() -> bool {
+    false
 }

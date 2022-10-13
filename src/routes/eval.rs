@@ -9,44 +9,50 @@ use rocket::serde::{Deserialize, Serialize};
 use rocket::tokio::process::Command;
 use rocket::tokio::time::{sleep, Duration};
 use rocket::{tokio, State};
+use rocket_okapi::okapi::schemars::{self, JsonSchema};
+use rocket_okapi::openapi;
 use snowflake::ProcessUniqueId;
 
 use crate::docker::{container_exists, exec, start_container};
 use crate::{Cache, Config};
 
-#[derive(Clone, Deserialize, PartialEq, Eq, Hash, Serialize)]
+#[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash, JsonSchema)]
 #[serde(crate = "rocket::serde")]
-pub struct Payload {
+pub struct Eval {
+    #[schemars(example = "example_language")]
     language: String,
+    #[schemars(example = "example_code")]
     code: String,
-    #[serde(default)]
-    input: String,
-    #[serde(default)]
-    args: Vec<String>,
+    input: Option<String>,
+    args: Option<Vec<String>>,
 }
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(crate = "rocket::serde")]
-pub struct Response {
+pub struct EvalResult {
+    #[schemars(example = "example_stdout")]
     stdout: String,
     stderr: String,
     status: EvalStatus,
 }
 
 #[allow(clippy::module_name_repetitions)]
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(crate = "rocket::serde")]
 pub struct EvalStatus {
+    #[schemars(example = "example_success")]
     success: bool,
     code: Option<i32>,
 }
 
+/// # Evaluate code
+#[openapi(tag = "General")]
 #[post("/eval", format = "json", data = "<payload>")]
 pub async fn eval(
-    payload: Json<Payload>,
+    payload: Json<Eval>,
     config: &State<Config>,
     cache: &State<Cache>,
-) -> Result<Json<Response>, Custom<String>> {
+) -> Result<Json<EvalResult>, Custom<String>> {
     if !config.language.enabled.contains(&payload.language) {
         return Err(Custom(
             Status::NotFound,
@@ -131,7 +137,7 @@ pub async fn eval(
 
                 return Err(Custom(Status::GatewayTimeout, "Eval timed out".to_owned()));
             },
-            output = _eval(&payload.language, &payload.code, &payload.input, &payload.args, &uid) => {
+            output = _eval(&payload.language, &payload.code, payload.input.as_deref(), payload.args.as_deref(), &uid) => {
                 match output {
                     Ok(output)  => {
                         if success || output.status.success() {
@@ -168,7 +174,7 @@ pub async fn eval(
         format!("legion-{}", payload.language).underline().bold()
     );
 
-    let response = Response {
+    let response = EvalResult {
         stdout: String::from_utf8_lossy(&output.stdout).to_string(),
         stderr: String::from_utf8_lossy(&output.stderr).to_string(),
         status: EvalStatus {
@@ -187,8 +193,8 @@ pub async fn eval(
 async fn _eval(
     language: &str,
     code: &str,
-    input: &str,
-    args: &[String],
+    input: Option<&str>,
+    args: Option<&[String]>,
     uid: &str,
 ) -> Result<Output> {
     let mut cmd = Command::new("docker");
@@ -202,14 +208,32 @@ async fn _eval(
         "/bin/sh",
         "/var/run/run.sh",
         code,
-        input,
+        input.unwrap_or_default(),
     ]);
+
+    let args = args.unwrap_or_default();
 
     if !args.is_empty() {
         cmd.args(args);
     }
 
     Ok(cmd.output().await?)
+}
+
+fn example_language() -> &'static str {
+    "javascript"
+}
+
+fn example_code() -> &'static str {
+    "console.log('Hello, World!');"
+}
+
+fn example_stdout() -> &'static str {
+    "Hello, World!"
+}
+
+fn example_success() -> bool {
+    true
 }
 
 #[cfg(test)]
@@ -222,7 +246,7 @@ mod test {
     use rocket::serde::json::{from_str, to_string};
     use rocket::{Build, Rocket};
 
-    use super::{eval, exec, Cache, Payload, Response};
+    use super::{eval, exec, Cache, Eval, EvalResult};
     use crate::config::{Config, Language};
     use crate::docker::{build_images, prepare_containers};
 
@@ -265,12 +289,12 @@ mod test {
                             .post("/eval")
                             .header(ContentType::JSON)
                             .body(
-                                to_string(&Payload {
+                                to_string(&Eval {
                                     language: stringify!($name).to_owned(),
                                     code: fs::read_to_string(format!("test-programs/{}", $filename))
                                         .expect("Test program not found"),
-                                    args: vec![],
-                                    input: String::new(),
+                                    args: Some(vec![]),
+                                    input: Some(String::new()),
                                 })
                                 .expect("Failed converting to json string"),
                             )
@@ -279,7 +303,7 @@ mod test {
                     assert_eq!(res.status(), Status::Ok);
                     assert_eq!(res.content_type(), Some(ContentType::JSON));
 
-                    let body: Response = from_str(&res.into_string().expect("Body empty")).expect("Invalid body");
+                    let body: EvalResult = from_str(&res.into_string().expect("Body empty")).expect("Invalid body");
 
                     assert_eq!(body.stdout.trim(), "Hello, World!", "{}", body.stderr.trim());
 

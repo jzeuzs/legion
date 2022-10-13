@@ -27,8 +27,12 @@ features = ["env-filter"]
 
 [dependencies.moka]
 version = "0.9.4"
-features = ["future", "dash"]
+features = ["future"]
 
 [dependencies.config]
 version = "0.13.2"
 features = ["toml", "yaml"]
+
+[dependencies.rocket_okapi]
+version = "0.8.0-rc.2"
+features = ["swagger"]

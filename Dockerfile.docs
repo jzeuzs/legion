@@ -21,4 +21,6 @@ RUN apt-get update && \
 COPY --from=builder /target/release/legion /usr/local/bin/legion
 COPY Cargo.lock /
 
+RUN echo "skip-docker-check = true\nport = 3000" > Legion.toml
+
 CMD ["/usr/local/bin/legion"]

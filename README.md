@@ -5,3 +5,7 @@
 [![Continuous Delivery](https://github.com/devtomio/legion/actions/workflows/cd.yml/badge.svg)](https://github.com/devtomio/legion/actions/workflows/cd.yml)
 
 Arbitrary code execution server using Docker.
+
+## API Documentation
+
+The API Documentation can be seen [here](https://legion-production.up.railway.app/docs).
