@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::pedantic)]
-#![allow(clippy::too_many_lines)]
+#![allow(clippy::too_many_lines, clippy::module_name_repetitions)]
 
 #[macro_use]
 extern crate rocket;
@@ -13,6 +13,8 @@ use ::config::{Config as ConfigBuilder, Environment, File};
 use anyhow::Result;
 use moka::future::{Cache as MokaCache, CacheBuilder};
 use rocket::tokio::{self, time};
+use rocket_okapi::openapi_get_routes;
+use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, EnvFilter};
@@ -22,14 +24,12 @@ pub mod docker;
 mod routes;
 mod util;
 
-pub type Cache = MokaCache<routes::eval::Payload, routes::eval::Response>;
+pub type Cache = MokaCache<routes::eval::Eval, routes::eval::EvalResult>;
 pub type Config = Arc<config::Config>;
 
 #[allow(clippy::no_effect_underscore_binding)]
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
-    util::check_if_docker_exists().expect("Checking for docker failed");
-
     tracing_subscriber::registry()
         .with(fmt::layer())
         .with(
@@ -47,6 +47,10 @@ async fn main() -> Result<(), rocket::Error> {
         .expect("Couldn't find config file")
         .try_deserialize()
         .expect("Deserializing config failed");
+
+    if !config.skip_docker_check {
+        util::check_if_docker_exists().expect("Checking for docker failed");
+    }
 
     docker::build_images(&config.language.enabled, config.update_images)
         .expect("Failed building images");
@@ -85,12 +89,19 @@ async fn main() -> Result<(), rocket::Error> {
     let _rocket = rocket::build()
         .manage(config)
         .manage(cache)
-        .mount("/", routes![
+        .mount("/", openapi_get_routes![
             routes::eval::eval,
             routes::languages::languages,
             routes::containers::containers,
             routes::cleanup::cleanup
         ])
+        .mount(
+            "/docs",
+            make_swagger_ui(&SwaggerUIConfig {
+                url: "../openapi.json".to_owned(),
+                ..Default::default()
+            })
+        )
         .launch()
         .await?;
 
