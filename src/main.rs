@@ -100,7 +100,7 @@ async fn main() -> Result<(), rocket::Error> {
             make_swagger_ui(&SwaggerUIConfig {
                 url: "../openapi.json".to_owned(),
                 ..Default::default()
-            })
+            }),
         )
         .launch()
         .await?;
