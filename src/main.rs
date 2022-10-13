@@ -20,6 +20,7 @@ use tracing_subscriber::{fmt, EnvFilter};
 mod config;
 pub mod docker;
 mod routes;
+mod util;
 
 pub type Cache = MokaCache<routes::eval::Payload, routes::eval::Response>;
 pub type Config = Arc<config::Config>;
@@ -27,6 +28,8 @@ pub type Config = Arc<config::Config>;
 #[allow(clippy::no_effect_underscore_binding)]
 #[rocket::main]
 async fn main() -> Result<(), rocket::Error> {
+    util::check_if_docker_exists().expect("Checking for docker failed");
+
     tracing_subscriber::registry()
         .with(fmt::layer())
         .with(
