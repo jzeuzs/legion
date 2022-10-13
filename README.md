@@ -9,3 +9,7 @@ Arbitrary code execution server using Docker.
 ## API Documentation
 
 The API Documentation can be seen [here](https://legion-production.up.railway.app/docs).
+
+## Install
+
+The latest binary can be found on the [Releases](https://github.com/devtomio/legion/releases) section of this repository.
