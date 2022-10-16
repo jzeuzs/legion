@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/devtomio/legion/compare/v0.1.2...v0.1.3) (2022-10-16)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** `website-screenshot` -> `legion` ([7a529a7](https://github.com/devtomio/legion/commit/7a529a79562f3f821491cb7af6d99d27d60a086b))
+
 ## [0.1.2](https://github.com/devtomio/legion/compare/v0.1.1...v0.1.2) (2022-10-16)
 
 
