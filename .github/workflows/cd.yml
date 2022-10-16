@@ -175,7 +175,7 @@ jobs:
         uses: actions/download-artifact@fb598a63ae348fa914e94cd0ff38f362e927b741 # tag=v3
 
       - name: Setup the Checksums
-        run: for file in website-screenshot-*/website-screenshot-*; do openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"; done
+        run: for file in legion-*/legion-*; do openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"; done
 
       - name: Add Artifacts to Release
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5 # tag=v1
