@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/devtomio/legion/compare/v0.1.0...v0.1.1) (2022-10-16)
+
+
+### 🐛 Bug Fixes
+
+* **ci:** fix release workflow ([55e253c](https://github.com/devtomio/legion/commit/55e253c8b768d53e610a29c6d96d7a79bb547f49))
+
 ## 0.1.0 (2022-10-15)
 
 
