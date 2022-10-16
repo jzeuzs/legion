@@ -180,5 +180,5 @@ jobs:
       - name: Add Artifacts to Release
         uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5 # tag=v1
         with:
-          files: website-screenshot-*/website-screenshot-*
+          files: legion-*/legion-*
           tag_name: ${{ needs.release_please.outputs.tag_name }}
