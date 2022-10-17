@@ -39,7 +39,7 @@ jobs:
     if: ${{ needs.release_please.outputs.release_created == 'true' }}
     steps:
       - name: Checkout Project
-        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # tag=v3
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@95cb08cb2672c73d4ffd2f422e6d11953d2a9c70 # tag=v2.1.0
@@ -167,7 +167,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the Repository
-        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # tag=v3
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # tag=v3
         with:
           fetch-depth: 0
 
