@@ -11,7 +11,7 @@ anyhow = "1.0.66"
 rayon = "1.5.3"
 owo-colors = "3.5.0"
 snowflake = "1.3.0"
-libc = "0.2.135"
+libc = "0.2.137"
 
 [dependencies.rocket]
 version = "0.5.0-rc.2"
