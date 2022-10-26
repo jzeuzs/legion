@@ -1,4 +1,5 @@
 use std::process::Output;
+use std::sync::Arc;
 
 use anyhow::Result;
 use owo_colors::OwoColorize;
@@ -93,6 +94,8 @@ pub async fn eval(
             Some(cached) => {
                 info!("[{}] Cache hit!", uid.yellow());
 
+                let cached = EvalResult::clone(&cached);
+
                 return Ok(Json(cached));
             },
             None => {
@@ -184,7 +187,7 @@ pub async fn eval(
     };
 
     if config.cache.enabled {
-        cache.insert(payload.0, response.clone()).await;
+        cache.insert(payload.0, Arc::new(response.clone())).await;
     }
 
     Ok(Json(response))

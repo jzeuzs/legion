@@ -24,7 +24,7 @@ pub mod docker;
 mod routes;
 mod util;
 
-pub type Cache = MokaCache<routes::eval::Eval, routes::eval::EvalResult>;
+pub type Cache = MokaCache<routes::eval::Eval, Arc<routes::eval::EvalResult>>;
 pub type Config = Arc<config::Config>;
 
 #[allow(clippy::no_effect_underscore_binding)]
