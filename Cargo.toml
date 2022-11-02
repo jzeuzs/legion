@@ -26,7 +26,7 @@ version = "0.3.16"
 features = ["env-filter"]
 
 [dependencies.moka]
-version = "0.9.4"
+version = "0.9.5"
 features = ["future"]
 
 [dependencies.config]
