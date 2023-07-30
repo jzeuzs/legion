@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.4](https://github.com/jzeuzs/legion/compare/v0.1.3...v0.1.4) (2023-07-30)
+
+
+### 🐛 Bug Fixes
+
+* **deps:** update all non-major dependencies ([#35](https://github.com/jzeuzs/legion/issues/35)) ([705cec5](https://github.com/jzeuzs/legion/commit/705cec53bf008c6fcfa67d2bda23ece8865dc33e))
+* **deps:** update all non-major dependencies ([#45](https://github.com/jzeuzs/legion/issues/45)) ([f5694c9](https://github.com/jzeuzs/legion/commit/f5694c9435dac622c67d1e2d75016423c1bd8bc7))
+* **deps:** update rust crate libc to 0.2.137 ([#40](https://github.com/jzeuzs/legion/issues/40)) ([6a95231](https://github.com/jzeuzs/legion/commit/6a95231ef2996d4643cabcaa28a557e1e7cf9eed))
+* **deps:** update rust crate moka to 0.9.5 ([#43](https://github.com/jzeuzs/legion/issues/43)) ([7f45b39](https://github.com/jzeuzs/legion/commit/7f45b3984911a13a911daecfbeddf541c2773445))
+
+
+### 🏠 Refactor
+
+* **cache:** use `Arc` for cache values ([#41](https://github.com/jzeuzs/legion/issues/41)) ([23ab8f2](https://github.com/jzeuzs/legion/commit/23ab8f2d068333bc4b23d309dc82b2180bad3a8e))
+
 ## [0.1.3](https://github.com/jzeuzs/legion/compare/v0.1.2...v0.1.3) (2022-10-16)
 
 
