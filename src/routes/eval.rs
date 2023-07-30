@@ -202,7 +202,7 @@ async fn _eval(
 ) -> Result<Output> {
     let mut cmd = Command::new("docker");
 
-    cmd.args(&[
+    cmd.args([
         "exec",
         "-u1001:1001",
         "-i",
@@ -285,7 +285,7 @@ mod test {
                         enabled: vec![stringify!($name).to_owned()],
                         ..Language::default()
                     })
-                    .expect("Failed preparing containers");
+                    .expect("Failed preparing containers.");
 
                     let res =
                         client
