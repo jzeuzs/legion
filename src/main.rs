@@ -1,6 +1,6 @@
 #![forbid(unsafe_code)]
 #![warn(clippy::pedantic)]
-#![allow(clippy::too_many_lines, clippy::module_name_repetitions)]
+#![allow(clippy::too_many_lines, clippy::module_name_repetitions, clippy::uninlined_format_args)]
 
 #[macro_use]
 extern crate rocket;
