@@ -175,7 +175,10 @@ jobs:
       - name: Cache dependencies
         uses: Swatinem/rust-cache@dd05243424bd5c0e585e4b55eb2d7615cdd32f1f # v2
 
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@nextest
+
       - name: Run test
-        run: cargo test -- ${{ matrix.tests }} --exact
+        run: cargo nextest run ${{ matrix.tests }} --retries 3
         env:
           LEGION_TEST_BUILD: "0"
