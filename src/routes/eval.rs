@@ -308,7 +308,7 @@ mod test {
 
                     let body: EvalResult = from_str(&res.into_string().expect("Body empty")).expect("Invalid body");
 
-                    assert!(body.stdout.contains("Hello, World!"), "{}", body.stderr.trim());
+                    assert!(body.stdout.contains("Hello, World!"), "stderr: {} \n\nstdout: {}", body.stderr.trim(), body.stdout.trim());
 
                     // Removing containers as they can cause unwanted clutter in the user's device
                     exec(&["kill", &format!("legion-{}", stringify!($name))]).expect("Failed killing container");
