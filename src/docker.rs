@@ -34,6 +34,12 @@ pub fn exec(args: &[&str]) -> Result<Output> {
 pub fn start_container(language: &str, config: &Language) -> Result<()> {
     let image = format!("legion-{}", language);
 
+    let is_running = exec(&["inspect", &image, "--format", "'{{.State.Status}}'"])?;
+
+    if String::from_utf8_lossy(&is_running.stdout).contains("running") {
+        return Ok(());
+    }
+
     let output = exec(&[
         "run",
         &format!("--runtime={}", config.runtime),

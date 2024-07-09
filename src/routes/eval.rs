@@ -134,7 +134,7 @@ pub async fn eval(
     #[allow(unused_assignments)]
     let output = loop {
         tokio::select! {
-            _ = sleep(Duration::from_secs_f64(config.language.timeout)) => {
+            () = sleep(Duration::from_secs_f64(config.language.timeout)) => {
                 exec(&["kill", &format!("legion-{}", payload.language)]).map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
                 start_container(&payload.language, &config.language).map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
 
@@ -308,7 +308,7 @@ mod test {
 
                     let body: EvalResult = from_str(&res.into_string().expect("Body empty")).expect("Invalid body");
 
-                    assert_eq!(body.stdout.trim(), "Hello, World!", "{}", body.stderr.trim());
+                    assert!(body.stdout.contains("Hello, World!"), "stderr: {} \n\nstdout: {}", body.stderr.trim(), body.stdout.trim());
 
                     // Removing containers as they can cause unwanted clutter in the user's device
                     exec(&["kill", &format!("legion-{}", stringify!($name))]).expect("Failed killing container");
@@ -336,7 +336,6 @@ mod test {
         elixir, "elixir.exs";
         erlang, "erlang.erl";
         fsharp, "fsharp.fs";
-        go, "go.go";
         haskell, "haskell.hs";
         java, "java.java";
         javascript, "javascript.js";

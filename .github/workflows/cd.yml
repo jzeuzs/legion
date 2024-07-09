@@ -25,10 +25,10 @@ jobs:
         run: echo "::set-output name=changelog-types::$(cat .github/changelog-types.json | jq -c)"
 
       - name: Release Please
-        uses: google-github-actions/release-please-action@ca6063f4ed81b55db15b8c42d1b6f7925866342d # v3
+        uses: googleapis/release-please-action@v4
         id: release
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-type: rust
           changelog-types: ${{ steps.get-changelog-types.outputs.changelog-types }}
 
