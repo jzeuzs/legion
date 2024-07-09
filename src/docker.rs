@@ -36,7 +36,7 @@ pub fn start_container(language: &str, config: &Language) -> Result<()> {
 
     let is_running = exec(&["inspect", &image, "--format", "'{{.State.Status}}'"])?;
 
-    if !String::from_utf8_lossy(&is_running.stdout).contains("running") {
+    if String::from_utf8_lossy(&is_running.stdout).contains("running") {
         return Ok(());
     }
 
