@@ -1,4 +1,3 @@
-FROM golang:alpine
+FROM golang
 
-RUN apk add --no-cache libc6-compat
 COPY run.sh /var/run
