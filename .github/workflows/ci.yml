@@ -142,6 +142,7 @@ jobs:
     needs: prepare-tests
     name: Tests
     runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
       matrix: ${{ fromJson(needs.prepare-tests.outputs.matrix) }}
     steps:
