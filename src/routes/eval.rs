@@ -134,7 +134,7 @@ pub async fn eval(
     #[allow(unused_assignments)]
     let output = loop {
         tokio::select! {
-            _ = sleep(Duration::from_secs_f64(config.language.timeout)) => {
+            () = sleep(Duration::from_secs_f64(config.language.timeout)) => {
                 exec(&["kill", &format!("legion-{}", payload.language)]).map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
                 start_container(&payload.language, &config.language).map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
 
