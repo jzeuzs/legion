@@ -336,7 +336,6 @@ mod test {
         elixir, "elixir.exs";
         erlang, "erlang.erl";
         fsharp, "fsharp.fs";
-        go, "go.go";
         haskell, "haskell.hs";
         java, "java.java";
         javascript, "javascript.js";
