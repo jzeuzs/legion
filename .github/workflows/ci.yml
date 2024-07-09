@@ -179,6 +179,6 @@ jobs:
         uses: taiki-e/install-action@nextest
 
       - name: Run test
-        run: cargo nextest run ${{ matrix.tests }} --retries 3
+        run: cargo nextest run -E 'test(=${{ matrix.tests }})' --retries 3
         env:
           LEGION_TEST_BUILD: "0"
