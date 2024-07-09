@@ -4,5 +4,5 @@ export GOCACHE=/tmp/go-cache
 printf %s"\n" "$1" > program.go
 echo "$2" > .input
 shift 2
-go build program.go
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build program.go
 ./program "$@" < .input
