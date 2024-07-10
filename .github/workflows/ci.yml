@@ -183,4 +183,5 @@ jobs:
         uses: nick-fields/retry@v3
         with:
           max_attempts: 3
+          timeout_minutes: 10
           command: LEGION_TEST_BUILD="0" cargo nextest run -E 'test(=${{ matrix.tests }})'
