@@ -25,10 +25,6 @@ features = ["full"]
 version = "0.3.17"
 features = ["env-filter"]
 
-[dependencies.moka]
-version = "0.11.2"
-features = ["future"]
-
 [dependencies.config]
 version = "0.13.3"
 features = ["toml", "yaml"]

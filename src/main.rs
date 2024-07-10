@@ -16,7 +16,6 @@ use std::time::Duration;
 
 use ::config::{Config as ConfigBuilder, Environment, File};
 use anyhow::Result;
-use moka::future::{Cache as MokaCache, CacheBuilder};
 use rocket::tokio::{self, time};
 use rocket_okapi::openapi_get_routes;
 use rocket_okapi::swagger_ui::{make_swagger_ui, SwaggerUIConfig};
@@ -29,7 +28,6 @@ pub mod docker;
 mod routes;
 mod util;
 
-pub type Cache = MokaCache<routes::eval::Eval, Arc<routes::eval::EvalResult>>;
 pub type Config = Arc<config::Config>;
 
 #[allow(clippy::no_effect_underscore_binding)]
@@ -85,15 +83,8 @@ async fn main() -> Result<(), rocket::Error> {
         }
     });
 
-    let cache: Cache =
-        CacheBuilder::new(if config.cache.enabled { config.cache.max_capacity } else { 0 })
-            .time_to_idle(Duration::from_secs_f64(config.cache.time_to_idle * 60.0))
-            .time_to_live(Duration::from_secs_f64(config.cache.time_to_live * 60.0))
-            .build();
-
     let _rocket = rocket::build()
         .manage(config)
-        .manage(cache)
         .mount("/", openapi_get_routes![
             routes::eval::eval,
             routes::languages::languages,

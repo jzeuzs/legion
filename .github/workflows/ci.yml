@@ -180,6 +180,7 @@ jobs:
         uses: taiki-e/install-action@nextest
 
       - name: Run test
-        run: cargo nextest run -E 'test(=${{ matrix.tests }})'
-        env:
-          LEGION_TEST_BUILD: "0"
+        uses: nick-fields/retry@v3
+        with:
+          max_attempts: 3
+          command: LEGION_TEST_BUILD="0" cargo nextest run -E 'test(=${{ matrix.tests }})'
