@@ -96,10 +96,6 @@ const fn default_cleanup_interval() -> f64 {
     10.0
 }
 
-const fn default_max_capacity() -> u64 {
-    10_000
-}
-
 const fn default_true() -> bool {
     true
 }
