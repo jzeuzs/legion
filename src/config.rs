@@ -100,7 +100,7 @@ impl Default for Cache {
 }
 
 const fn default_memory() -> u32 {
-    256
+    512
 }
 
 const fn default_cpus() -> f64 {
