@@ -1,8 +1,10 @@
-use std::process::{Command, Output, Stdio};
+use std::process::{Output, Stdio};
 
 use anyhow::Result;
+use futures_util::stream::{self, StreamExt};
 use owo_colors::OwoColorize;
-use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use tokio::process::Command;
+use tracing::{info, warn};
 
 use crate::config::Language;
 
@@ -11,13 +13,15 @@ use crate::config::Language;
 /// # Errors
 ///
 /// - When the Docker CLI is not on your `PATH`.
-pub fn exec(args: &[&str]) -> Result<Output> {
+#[tracing::instrument]
+pub async fn exec(args: &[&str]) -> Result<Output> {
     let output = Command::new("docker")
         .args(args)
         .stderr(Stdio::piped())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .output()?;
+        .output()
+        .await?;
 
     Ok(output)
 }
@@ -31,10 +35,11 @@ pub fn exec(args: &[&str]) -> Result<Output> {
 /// # Panics
 ///
 /// - When starting the container fails.
-pub fn start_container(language: &str, config: &Language) -> Result<()> {
+#[tracing::instrument]
+pub async fn start_container(language: &str, config: &Language) -> Result<()> {
     let image = format!("legion-{}", language);
 
-    let is_running = exec(&["inspect", &image, "--format", "'{{.State.Status}}'"])?;
+    let is_running = exec(&["inspect", &image, "--format", "'{{.State.Status}}'"]).await?;
 
     if String::from_utf8_lossy(&is_running.stdout).contains("running") {
         return Ok(());
@@ -54,7 +59,8 @@ pub fn start_container(language: &str, config: &Language) -> Result<()> {
         &format!("--memory-swap={}m", config.memory),
         &image,
         "/bin/sh",
-    ])?;
+    ])
+    .await?;
 
     assert!(
         output.status.success(),
@@ -80,11 +86,11 @@ pub fn start_container(language: &str, config: &Language) -> Result<()> {
 /// # Panics
 ///
 /// - When building the image fails.
-pub fn build_images(languages: &[String], update_images: bool) -> Result<()> {
-    info!("{}", "Building images...".blue());
-
-    let build_image = |language: &String| {
+#[tracing::instrument]
+pub async fn build_images(languages: &[String], update_images: bool) -> Result<()> {
+    async fn build_image(language: String, update_images: bool) {
         let output = &exec(&["images", "-q", &format!("legion-{}", language)])
+            .await
             .expect("Failed checking images");
 
         let is_image_present = String::from_utf8_lossy(&output.stdout);
@@ -98,6 +104,7 @@ pub fn build_images(languages: &[String], update_images: bool) -> Result<()> {
                 &format!("legion-{}", language),
                 &format!("languages/{}", language),
             ])
+            .await
             .expect("Failed building image");
 
             assert!(
@@ -114,9 +121,18 @@ pub fn build_images(languages: &[String], update_images: bool) -> Result<()> {
 
             info!("Finished building image {}.", format!("legion-{}", language).bold().underline());
         }
-    };
+    }
 
-    languages.par_iter().for_each(build_image);
+    info!("{}", "Building images...".blue());
+
+    let languages = languages.to_vec();
+
+    stream::iter(
+        languages.into_iter().map(|language| tokio::spawn(build_image(language, update_images))),
+    )
+    .buffer_unordered(10)
+    .collect::<Vec<_>>()
+    .await;
 
     info!("{}", "Finished building images.".green());
 
@@ -132,11 +148,12 @@ pub fn build_images(languages: &[String], update_images: bool) -> Result<()> {
 /// # Panics
 ///
 /// - When starting the container fails.
-pub fn prepare_containers(languages: &[String], config: &Language) -> Result<()> {
+#[tracing::instrument]
+pub async fn prepare_containers(languages: &[String], config: &Language) -> Result<()> {
     info!("{}", "Preparing containers...".blue());
 
     for language in languages {
-        let container_exists = container_exists(language)?;
+        let container_exists = container_exists(language).await?;
 
         if container_exists {
             warn!(
@@ -144,10 +161,10 @@ pub fn prepare_containers(languages: &[String], config: &Language) -> Result<()>
                 format!("Container legion-{} already exists. Restarting.", language).bright_red()
             );
 
-            exec(&["kill", &format!("legion-{}", language)])?;
-            start_container(language, config)?;
+            exec(&["kill", &format!("legion-{}", language)]).await?;
+            start_container(language, config).await?;
         } else {
-            start_container(language, config)?;
+            start_container(language, config).await?;
         }
     }
 
@@ -161,16 +178,20 @@ pub fn prepare_containers(languages: &[String], config: &Language) -> Result<()>
 /// # Errors
 ///
 /// - When killing the container fails.
-pub fn kill_containers(languages: &[String]) -> Result<()> {
-    let kill_container = |language: &String| -> Result<()> {
+#[tracing::instrument]
+pub async fn kill_containers(languages: &[String]) -> Result<()> {
+    async fn kill_container(language: String) {
         info!("Killing container {}...", format!("legion-{}", language).bold().underline());
-        exec(&["kill", &format!("legion-{}", language)])?;
+        exec(&["kill", &format!("legion-{}", language)]).await.expect("Failed killing container");
         info!("Killed container {}.", format!("legion-{}", language).bold().underline());
+    }
 
-        Ok(())
-    };
+    let languages = languages.to_vec();
 
-    languages.par_iter().for_each(|lang| kill_container(lang).expect("Failed killing container"));
+    stream::iter(languages.into_iter().map(|language| tokio::spawn(kill_container(language))))
+        .buffer_unordered(10)
+        .collect::<Vec<_>>()
+        .await;
 
     Ok(())
 }
@@ -180,6 +201,7 @@ pub fn kill_containers(languages: &[String]) -> Result<()> {
 /// # Errors
 ///
 /// - When the Docker CLI is not on your `PATH`.
-pub fn container_exists(language: &str) -> Result<bool> {
-    Ok(exec(&["top", &format!("legion-{}", language)])?.status.success())
+#[tracing::instrument]
+pub async fn container_exists(language: &str) -> Result<bool> {
+    Ok(exec(&["top", &format!("legion-{}", language)]).await?.status.success())
 }

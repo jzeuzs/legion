@@ -1,18 +1,13 @@
-use anyhow::Result;
-use rocket::http::Status;
-use rocket::response::status::Custom;
-use rocket::State;
-use rocket_okapi::openapi;
+use axum::extract::State;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 
 use crate::docker::kill_containers;
-use crate::Config;
+use crate::{Config, Result};
 
 /// # Kill all containers
-#[openapi(tag = "Management")]
-#[post("/cleanup")]
-pub fn cleanup(config: &State<Config>) -> Result<Status, Custom<String>> {
-    kill_containers(&config.language.enabled)
-        .map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
+pub async fn cleanup(State(config): State<Config>) -> Result<Response> {
+    kill_containers(&config.language.enabled).await?;
 
-    Ok(Status::NoContent)
+    Ok(StatusCode::NO_CONTENT.into_response())
 }

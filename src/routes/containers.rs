@@ -1,22 +1,17 @@
-use anyhow::Result;
-use rocket::http::Status;
-use rocket::response::status::Custom;
-use rocket::serde::json::Json;
-use rocket_okapi::openapi;
+use axum::response::{IntoResponse, Response};
+use axum::Json;
 
 use crate::docker::exec;
+use crate::Result;
 
 /// # List all containers
-#[openapi(tag = "Management")]
-#[get("/containers")]
-pub fn containers() -> Result<Json<Vec<String>>, Custom<String>> {
-    let output = exec(&["ps", "--filter", "name=legion-", "--format", "{{.Names}}"])
-        .map_err(|err| Custom(Status::InternalServerError, err.to_string()))?;
+pub async fn containers() -> Result<Response> {
+    let output = exec(&["ps", "--filter", "name=legion-", "--format", "{{.Names}}"]).await?;
 
     let list = String::from_utf8_lossy(&output.stdout)
         .lines()
         .map(|ln| ln.trim().to_owned())
         .collect::<Vec<_>>();
 
-    Ok(Json(list))
+    Ok(Json(list).into_response())
 }
