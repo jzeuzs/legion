@@ -1,8 +1,8 @@
 use anyhow::{Error, Result};
-use rocket::serde::{json, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(crate = "rocket::serde", rename_all = "kebab-case")]
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "kebab-case")]
 pub struct Config {
     #[serde(default)]
     pub language: Language,
@@ -18,8 +18,7 @@ pub struct Config {
     pub skip_docker_check: bool,
 }
 
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(crate = "rocket::serde", rename_all = "kebab-case")]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Language {
     pub enabled: Vec<String>,
     #[serde(default = "default_memory")]
@@ -42,7 +41,7 @@ impl Config {
     /// - When the conversion fails.
     #[inline]
     pub fn stringify(&self) -> Result<String> {
-        json::to_string(self).map_err(Error::msg)
+        serde_json::to_string(self).map_err(Error::msg)
     }
 }
 

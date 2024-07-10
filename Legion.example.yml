@@ -36,17 +36,3 @@ language:
 
   # The maximum number of retries when the evaluation fails for a non-timeout related cause.
   retries: 3
-
-# Cache-related configuration.
-cache:
-  # If you want to enable the cache.
-  enabled: true
-
-  # The Time-To-Live (TTL, in minutes) of a cache entry.
-  time-to-live: 300
-
-  # The Time-To-Idle (TTI, in minutes) of a cache entry.
-  time-to-idle: 60
-
-  # The maximum capacity of the cache.
-  max-capacity: 10000
