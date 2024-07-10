@@ -1,5 +1,4 @@
 use std::process::Output;
-use std::sync::Arc;
 
 use anyhow::Result;
 use owo_colors::OwoColorize;
@@ -15,7 +14,7 @@ use rocket_okapi::openapi;
 use snowflake::ProcessUniqueId;
 
 use crate::docker::{container_exists, exec, start_container};
-use crate::{Cache, Config};
+use crate::Config;
 
 #[derive(Clone, Deserialize, Serialize, PartialEq, Eq, Hash, JsonSchema)]
 #[serde(crate = "rocket::serde")]
@@ -52,7 +51,6 @@ pub struct EvalStatus {
 pub async fn eval(
     payload: Json<Eval>,
     config: &State<Config>,
-    cache: &State<Cache>,
 ) -> Result<Json<EvalResult>, Custom<String>> {
     if !config.language.enabled.contains(&payload.language) {
         return Err(Custom(
@@ -86,21 +84,6 @@ pub async fn eval(
                 Status::InternalServerError,
                 format!("Container legion-{} does not exist.", payload.language),
             ));
-        }
-    }
-
-    if config.cache.enabled {
-        match cache.get(&payload.0) {
-            Some(cached) => {
-                info!("[{}] Cache hit!", uid.yellow());
-
-                let cached = EvalResult::clone(&cached);
-
-                return Ok(Json(cached));
-            },
-            None => {
-                info!("[{}] Cache miss...", uid.yellow());
-            },
         }
     }
 
@@ -186,10 +169,6 @@ pub async fn eval(
         },
     };
 
-    if config.cache.enabled {
-        cache.insert(payload.0, Arc::new(response.clone())).await;
-    }
-
     Ok(Json(response))
 }
 
@@ -249,7 +228,7 @@ mod test {
     use rocket::serde::json::{from_str, to_string};
     use rocket::{Build, Rocket};
 
-    use super::{eval, exec, Cache, Eval, EvalResult};
+    use super::{eval, exec, Eval, EvalResult};
     use crate::config::{Config, Language};
     use crate::docker::{build_images, prepare_containers};
 
@@ -271,7 +250,6 @@ mod test {
                                 },
                                 ..Config::default()
                             }))
-                            .manage(Cache::new(100))
                     }
 
                     let client = Client::tracked(init_server()).unwrap();

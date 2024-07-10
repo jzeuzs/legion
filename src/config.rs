@@ -10,8 +10,6 @@ pub struct Config {
     pub prepare_containers: bool,
     #[serde(default = "default_cleanup_interval")]
     pub cleanup_interval: f64,
-    #[serde(default)]
-    pub cache: Cache,
     #[serde(default = "default_true")]
     pub update_images: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -36,19 +34,6 @@ pub struct Language {
     pub retries: u8,
 }
 
-#[derive(Clone, Deserialize, Serialize)]
-#[serde(crate = "rocket::serde", rename_all = "kebab-case")]
-pub struct Cache {
-    #[serde(default = "default_true")]
-    pub enabled: bool,
-    #[serde(default = "default_ttl")]
-    pub time_to_live: f64,
-    #[serde(default = "default_tti")]
-    pub time_to_idle: f64,
-    #[serde(default = "default_max_capacity")]
-    pub max_capacity: u64,
-}
-
 impl Config {
     /// Converts the config into a JSON string.
     ///
@@ -67,7 +52,6 @@ impl Default for Config {
             prepare_containers: true,
             cleanup_interval: 10.0,
             update_images: true,
-            cache: Cache::default(),
             language: Language::default(),
             port: None,
             skip_docker_check: false,
@@ -84,17 +68,6 @@ impl Default for Language {
             runtime: String::from("runc"),
             timeout: 30.0,
             retries: 3,
-        }
-    }
-}
-
-impl Default for Cache {
-    fn default() -> Self {
-        Cache {
-            enabled: true,
-            time_to_live: 300.0,
-            time_to_idle: 60.0,
-            max_capacity: 10_000,
         }
     }
 }
@@ -121,18 +94,6 @@ const fn default_retries() -> u8 {
 
 const fn default_cleanup_interval() -> f64 {
     10.0
-}
-
-const fn default_ttl() -> f64 {
-    300.0
-}
-
-const fn default_tti() -> f64 {
-    60.0
-}
-
-const fn default_max_capacity() -> u64 {
-    10_000
 }
 
 const fn default_true() -> bool {
