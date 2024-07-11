@@ -41,4 +41,4 @@ max-process-count = 128
 max-open-files = 2048
 
 # Maximum file size in bytes for a file.
-max-file-size = 30_000_000
+max-file-size = 50_000_000

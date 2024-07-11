@@ -1,6 +1,6 @@
 FROM alpine:latest as build 
 
-RUN apk add build-base git cmake util-linux --no-cache && \
+RUN apk add build-base git cmake --no-cache && \
     git clone https://github.com/justinmeza/lci.git && \
     cd lci && \
     mkdir build && \
@@ -11,5 +11,6 @@ RUN apk add build-base git cmake util-linux --no-cache && \
 
 FROM alpine:latest
 
+RUN apk add util-linux --no-cache
 COPY --from=build /usr/local/bin/lci /usr/local/bin/
 COPY run.sh /var/run/

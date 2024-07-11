@@ -75,7 +75,7 @@ impl Default for Language {
             retries: 3,
             max_process_count: 128,
             max_open_files: 2048,
-            max_file_size: 30_000_000,
+            max_file_size: 50_000_000,
         }
     }
 }
@@ -121,5 +121,5 @@ const fn default_max_open_files() -> u32 {
 }
 
 const fn default_max_file_size() -> u32 {
-    30_000_000
+    50_000_000
 }
