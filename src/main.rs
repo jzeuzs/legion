@@ -4,22 +4,26 @@
     clippy::too_many_lines,
     clippy::module_name_repetitions,
     clippy::uninlined_format_args,
-    clippy::missing_panics_doc
+    clippy::missing_panics_doc,
+    clippy::missing_errors_doc
 )]
 
 use std::sync::Arc;
 use std::time::Duration;
 
 use ::config::{Config as ConfigBuilder, Environment, File};
+use axum::response::Redirect;
+use axum::routing::{get, post};
 use axum::Router;
 use docs::Docs;
+use routes::{cleanup, containers, eval, languages};
 use tokio::net::TcpListener;
 use tokio::time;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, EnvFilter};
 use utoipa::OpenApi;
-use utoipa_scalar::{Scalar, Servable};
+use utoipa_swagger_ui::SwaggerUi;
 
 mod config;
 pub mod docker;
@@ -90,5 +94,12 @@ async fn main() -> Result<()> {
 }
 
 pub fn app(config: Config) -> Router {
-    Router::new().merge(Scalar::with_url("/", Docs::openapi())).nest("/api", routes::router(config))
+    Router::new()
+        .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", Docs::openapi()))
+        .route("/", get(|| async { Redirect::temporary("/docs") }))
+        .route("/api/cleanup", post(cleanup::cleanup))
+        .route("/api/containers", get(containers::containers))
+        .route("/api/eval", post(eval::eval))
+        .route("/api/languages", get(languages::languages))
+        .with_state(config)
 }

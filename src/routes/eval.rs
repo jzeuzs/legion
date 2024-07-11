@@ -44,7 +44,7 @@ pub struct EvalStatus {
 
 #[utoipa::path(
     post,
-    path = "/eval",
+    path = "/api/eval",
     request_body = Eval,
     responses(
         (status = 200, body = EvalResult),
@@ -119,7 +119,7 @@ pub async fn eval(State(config): State<Config>, Json(payload): Json<Eval>) -> Re
 
                 return Ok((StatusCode::REQUEST_TIMEOUT, "Eval timed out.".to_string()).into_response())
             },
-            output = _eval(&payload.language, &payload.code, payload.input.as_deref(), payload.args.as_deref(), &id) => {
+            output = _eval(&payload.language, &payload.code, payload.input.as_deref(), payload.args.as_deref(), &id, config.clone()) => {
                 match output {
                     Ok(output)  => {
                         if success || output.status.success() {
@@ -174,6 +174,7 @@ async fn _eval(
     input: Option<&str>,
     args: Option<&[String]>,
     uid: &str,
+    config: Config,
 ) -> Result<Output> {
     let mut cmd = Command::new("docker");
 
@@ -183,6 +184,11 @@ async fn _eval(
         "-i",
         &format!("-w/tmp/eval/{}", uid),
         &format!("legion-{}", language),
+        "nice",
+        "prlimit",
+        &format!("--nproc={}", config.language.max_process_count),
+        &format!("--nofile={}", config.language.max_open_files),
+        &format!("--fsize={}", config.language.max_file_size),
         "/bin/sh",
         "/var/run/run.sh",
         code,
@@ -310,7 +316,7 @@ mod test {
                             .oneshot(
                                 Request::builder()
                                     .method(Method::POST)
-                                    .uri("/eval")
+                                    .uri("/api/eval")
                                     .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
                                     .body(Body::from(
                                         serde_json::to_string(&Eval {

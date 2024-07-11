@@ -6,7 +6,7 @@ use crate::Result;
 
 #[utoipa::path(
     get,
-    path = "/containers",
+    path = "/api/containers",
     responses(
         (status = 200, body = Vec<String>),
         (status = 500, description = "Server error.")

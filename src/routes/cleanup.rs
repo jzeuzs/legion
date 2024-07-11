@@ -7,7 +7,7 @@ use crate::{Config, Result};
 
 #[utoipa::path(
     post,
-    path = "/cleanup",
+    path = "/api/cleanup",
     responses(
         (status = 204),
         (status = 500, description = "Server error.")
