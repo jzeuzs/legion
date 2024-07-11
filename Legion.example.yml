@@ -38,7 +38,7 @@ language:
   retries: 3
 
   # Maximum number of processes per evaluation.
-  max-process-count: 64
+  max-process-count: 128
 
   # Maximum number of open files per evaluation
   max-open-files: 2048

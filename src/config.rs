@@ -73,7 +73,7 @@ impl Default for Language {
             runtime: String::from("runc"),
             timeout: 30.0,
             retries: 3,
-            max_process_count: 64,
+            max_process_count: 128,
             max_open_files: 2048,
             max_file_size: 10_000_000,
         }
@@ -113,7 +113,7 @@ const fn default_false() -> bool {
 }
 
 const fn default_max_process_count() -> u32 {
-    64
+    128
 }
 
 const fn default_max_open_files() -> u32 {
