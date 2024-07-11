@@ -121,5 +121,5 @@ const fn default_max_open_files() -> u32 {
 }
 
 const fn default_max_file_size() -> u32 {
-    10_000_000
+    30_000_000
 }
