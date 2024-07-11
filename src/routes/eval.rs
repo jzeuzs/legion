@@ -188,10 +188,10 @@ mod test {
     use axum::body::Body;
     use axum::http::{header, Method, Request, StatusCode};
     use http_body_util::BodyExt;
+    use nanoid::nanoid;
+    use paste::paste;
     use tokio::fs;
     use tower::ServiceExt;
-    use paste::paste;
-    use nanoid::nanoid;
 
     use super::{Eval, EvalResult};
     use crate::app;
