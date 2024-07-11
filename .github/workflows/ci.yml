@@ -176,12 +176,12 @@ jobs:
         uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@ef2fb5af7d19da8885ee368c6bde2ae6d0758e3d # v2
         with:
           tool: nextest
 
       - name: Run test
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3
         with:
           max_attempts: 3
           timeout_minutes: 10
