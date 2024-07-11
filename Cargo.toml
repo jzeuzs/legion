@@ -32,6 +32,14 @@ features = ["env-filter"]
 version = "0.14.0"
 features = ["toml", "yaml"]
 
+[dependencies.utoipa]
+version = "5.0.0-alpha.0"
+features = ["axum_extras"]
+
+[dependencies.utoipa-scalar]
+version = "0.2.0-alpha.0"
+features = ["axum"]
+
 [dev-dependencies]
 http-body-util = "0.1.2"
 mime = "0.3.17"

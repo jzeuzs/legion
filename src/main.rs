@@ -11,18 +11,21 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use ::config::{Config as ConfigBuilder, Environment, File};
-use axum::routing::{get, post};
 use axum::Router;
+use docs::Docs;
 use tokio::net::TcpListener;
 use tokio::time;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, EnvFilter};
+use utoipa::OpenApi;
+use utoipa_scalar::{Scalar, Servable};
 
 mod config;
 pub mod docker;
+mod docs;
 pub mod error;
-mod routes;
+pub mod routes;
 mod util;
 
 pub type Result<T> = anyhow::Result<T, error::AppError>;
@@ -87,10 +90,5 @@ async fn main() -> Result<()> {
 }
 
 pub fn app(config: Config) -> Router {
-    Router::new()
-        .route("/languages", get(routes::languages::languages))
-        .route("/containers", get(routes::containers::containers))
-        .route("/cleanup", post(routes::cleanup::cleanup))
-        .route("/eval", post(routes::eval::eval))
-        .with_state(config)
+    Router::new().merge(Scalar::with_url("/", Docs::openapi())).nest("/api", routes::router(config))
 }
