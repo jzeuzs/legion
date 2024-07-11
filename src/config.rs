@@ -75,7 +75,7 @@ impl Default for Language {
             retries: 3,
             max_process_count: 128,
             max_open_files: 2048,
-            max_file_size: 10_000_000,
+            max_file_size: 30_000_000,
         }
     }
 }
