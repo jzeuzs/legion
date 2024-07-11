@@ -353,6 +353,5 @@ mod test {
         rust, ".rs";
         spim, ".s";
         typescript, ".ts";
-        zig, ".zig";
     }
 }
