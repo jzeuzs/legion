@@ -162,8 +162,7 @@ jobs:
 
       - name: Build Image
         run: |
-          NAME_ARR=($(echo "${{ matrix.tests }}" | tr "::" "\n"))
-          NAME=${NAME_ARR[-1]}
+          NAME=$(echo "${{ matrix.tests }}" | grep -oP '(?<=::)[a-z_]+(?=_(input|hello_world))')
           docker build --load -t legion-$NAME languages/$NAME
 
       - name: Install Rust
@@ -177,7 +176,9 @@ jobs:
         uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # v2
 
       - name: Install cargo-nextest
-        uses: taiki-e/install-action@nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
 
       - name: Run test
         uses: nick-fields/retry@v3

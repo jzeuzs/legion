@@ -188,6 +188,8 @@ mod test {
     use axum::body::Body;
     use axum::http::{header, Method, Request, StatusCode};
     use http_body_util::BodyExt;
+    use nanoid::nanoid;
+    use paste::paste;
     use tokio::fs;
     use tower::ServiceExt;
 
@@ -197,104 +199,159 @@ mod test {
     use crate::docker::{build_images, exec, prepare_containers};
 
     macro_rules! gen_test {
-        ($($name:ident, $filename:expr;)+) => {
+        ($($name:ident, $ext:expr;)+) => {
             $(
-                #[tokio::test]
-                async fn $name() {
-                    let config = Arc::new(Config {
-                        prepare_containers: true,
-                        language: Language {
+                paste! {
+                    #[tokio::test]
+                    async fn [<$name _hello_world>]() {
+                        let config = Arc::new(Config {
+                            prepare_containers: true,
+                            language: Language {
+                                timeout: 30.0,
+                                enabled: vec![stringify!($name).to_owned()],
+                                ..Language::default()
+                            },
+                            ..Config::default()
+                        });
+
+                        let app = app(config);
+
+                        if option_env!("LEGION_TEST_BUILD").unwrap_or("0") != "0" {
+                            build_images(&[stringify!($name).to_owned()], true).await.expect("Failed building images");
+                        }
+
+                        prepare_containers(&[stringify!($name).to_owned()], &Language {
                             timeout: 30.0,
                             enabled: vec![stringify!($name).to_owned()],
                             ..Language::default()
-                        },
-                        ..Config::default()
-                    });
+                        })
+                        .await
+                        .expect("Failed preparing containers.");
 
-                    let app = app(config);
+                        let response = app
+                            .oneshot(
+                                Request::builder()
+                                    .method(Method::POST)
+                                    .uri("/eval")
+                                    .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                                    .body(Body::from(
+                                        serde_json::to_string(&Eval {
+                                            language: stringify!($name).to_owned(),
+                                            code: fs::read_to_string(format!("test-programs/{}/hello-world{}", stringify!($name).to_owned(), $ext))
+                                                .await.expect("Test program not found"),
+                                            args: Some(vec![]),
+                                            input: Some(String::new()),
+                                        })
+                                        .expect("Failed converting to json string")
+                                    ))
+                                    .unwrap()
+                            )
+                            .await
+                            .unwrap();
 
-                    if option_env!("LEGION_TEST_BUILD").unwrap_or("0") != "0" {
-                        build_images(&[stringify!($name).to_owned()], true).await.expect("Failed building images");
+                        assert_eq!(response.status(), StatusCode::OK);
+
+                        let body = response.into_body().collect().await.unwrap().to_bytes();
+                        let body: EvalResult = serde_json::from_slice(&body).unwrap();
+
+                        assert!(body.stdout.contains("Hello, World!"), "stderr: {} \n\nstdout: {}", body.stderr.trim(), body.stdout.trim());
+
+                        // Removing containers as they can cause unwanted clutter in the user's device
+                        exec(&["kill", &format!("legion-{}", stringify!($name))]).await.expect("Failed killing container");
+                        exec(&["rm", "-f", "-l", &format!("legion-{}", stringify!($name))]).await.expect("Failed deleting container");
                     }
 
-                    prepare_containers(&[stringify!($name).to_owned()], &Language {
-                        timeout: 30.0,
-                        enabled: vec![stringify!($name).to_owned()],
-                        ..Language::default()
-                    })
-                    .await
-                    .expect("Failed preparing containers.");
+                    #[tokio::test]
+                    async fn [<$name _input>]() {
+                        let config = Arc::new(Config {
+                            prepare_containers: true,
+                            language: Language {
+                                timeout: 30.0,
+                                enabled: vec![stringify!($name).to_owned()],
+                                ..Language::default()
+                            },
+                            ..Config::default()
+                        });
 
-                    let response = app
-                        .oneshot(
-                            Request::builder()
-                                .method(Method::POST)
-                                .uri("/eval")
-                                .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
-                                .body(Body::from(
-                                    serde_json::to_string(&Eval {
-                                        language: stringify!($name).to_owned(),
-                                        code: fs::read_to_string(format!("test-programs/{}", $filename))
-                                            .await.expect("Test program not found"),
-                                        args: Some(vec![]),
-                                        input: Some(String::new()),
-                                    })
-                                    .expect("Failed converting to json string")
-                                ))
-                                .unwrap()
-                        )
+                        let app = app(config);
+
+                        if option_env!("LEGION_TEST_BUILD").unwrap_or("0") != "0" {
+                            build_images(&[stringify!($name).to_owned()], true).await.expect("Failed building images");
+                        }
+
+                        prepare_containers(&[stringify!($name).to_owned()], &Language {
+                            timeout: 30.0,
+                            enabled: vec![stringify!($name).to_owned()],
+                            ..Language::default()
+                        })
                         .await
-                        .unwrap();
+                        .expect("Failed preparing containers.");
 
-                    assert_eq!(response.status(), StatusCode::OK);
+                        let input = nanoid!();
 
-                    let body = response.into_body().collect().await.unwrap().to_bytes();
-                    let body: EvalResult = serde_json::from_slice(&body).unwrap();
+                        let response = app
+                            .oneshot(
+                                Request::builder()
+                                    .method(Method::POST)
+                                    .uri("/eval")
+                                    .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
+                                    .body(Body::from(
+                                        serde_json::to_string(&Eval {
+                                            language: stringify!($name).to_owned(),
+                                            code: fs::read_to_string(format!("test-programs/{}/input{}", stringify!($name).to_owned(), $ext))
+                                                .await.expect("Test program not found"),
+                                            args: Some(vec![]),
+                                            input: Some(input.clone()),
+                                        })
+                                        .expect("Failed converting to json string")
+                                    ))
+                                    .unwrap()
+                            )
+                            .await
+                            .unwrap();
 
-                    assert!(body.stdout.contains("Hello, World!"), "stderr: {} \n\nstdout: {}", body.stderr.trim(), body.stdout.trim());
+                        assert_eq!(response.status(), StatusCode::OK);
 
-                    // Removing containers as they can cause unwanted clutter in the user's device
-                    exec(&["kill", &format!("legion-{}", stringify!($name))]).await.expect("Failed killing container");
-                    exec(&["rm", "-f", "-l", &format!("legion-{}", stringify!($name))]).await.expect("Failed deleting container");
+                        let body = response.into_body().collect().await.unwrap().to_bytes();
+                        let body: EvalResult = serde_json::from_slice(&body).unwrap();
+
+                        assert!(body.stdout.contains(&input), "stderr: {} \n\nstdout: {}", body.stderr.trim(), body.stdout.trim());
+
+                        // Removing containers as they can cause unwanted clutter in the user's device
+                        exec(&["kill", &format!("legion-{}", stringify!($name))]).await.expect("Failed killing container");
+                        exec(&["rm", "-f", "-l", &format!("legion-{}", stringify!($name))]).await.expect("Failed deleting container");
+                    }
                 }
             )*
         }
     }
 
     gen_test! {
-        assembly_as, "assembly_as.s";
-        assembly_fasm, "assembly_fasm.s";
-        assembly_gcc, "assembly_gcc.s";
-        assembly_jwasm, "assembly_jwasm.s";
-        assembly_nasm, "assembly_nasm.s";
-        bash, "bash.sh";
-        befunge, "befunge.b93";
-        brainfuck, "brainfuck.bf";
-        bun, "bun.js";
-        c, "c.c";
-        cpp, "cpp.cc";
-        crystal, "crystal.cr";
-        csharp, "csharp.cs";
-        deno, "deno.ts";
-        elixir, "elixir.exs";
-        erlang, "erlang.erl";
-        fsharp, "fsharp.fs";
-        haskell, "haskell.hs";
-        java, "java.java";
-        javascript, "javascript.js";
-        julia, "julia.jl";
-        lolcode, "lolcode.lol";
-        lua, "lua.lua";
-        objective_c, "objective_c.m";
-        perl, "perl.pl";
-        php, "php.php";
-        python, "python.py";
-        ruby, "ruby.rb";
-        rust, "rust.rs";
-        shakespeare, "shakespeare.spl";
-        spim, "spim.s";
-        sqlite, "sqlite.sql";
-        typescript, "typescript.ts";
-        zig, "zig.zig";
+        assembly_as, ".s";
+        bash, ".sh";
+        befunge, ".b93";
+        brainfuck, ".bf";
+        bun, ".js";
+        c, ".c";
+        cpp, ".cc";
+        crystal, ".cr";
+        csharp, ".cs";
+        deno, ".ts";
+        elixir, ".exs";
+        erlang, ".erl";
+        fsharp, ".fs";
+        haskell, ".hs";
+        java, ".java";
+        javascript, ".js";
+        julia, ".jl";
+        lolcode, ".lol";
+        lua, ".lua";
+        perl, ".pl";
+        php, ".php";
+        python, ".py";
+        ruby, ".rb";
+        rust, ".rs";
+        spim, ".s";
+        typescript, ".ts";
     }
 }
