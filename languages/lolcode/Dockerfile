@@ -1,6 +1,6 @@
 FROM alpine:latest as build 
 
-RUN apk add build-base git cmake --no-cache && \
+RUN apk add build-base git cmake util-linux --no-cache && \
     git clone https://github.com/justinmeza/lci.git && \
     cd lci && \
     mkdir build && \

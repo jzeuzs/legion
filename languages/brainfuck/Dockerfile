@@ -1,7 +1,7 @@
 FROM alpine as build
 
 COPY brainfuck.c Makefile ./
-RUN apk add build-base --no-cache && \
+RUN apk add build-base util-linux --no-cache && \
     make brainfuck
 
 FROM alpine
