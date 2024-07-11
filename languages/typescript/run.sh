@@ -3,7 +3,7 @@
 printf %s"\n" "$1" > program.ts
 echo "$2" > .input
 shift 2
-tsc --lib DOM,ESNext --target ES2020 --strict --skipLibCheck \
+tsc --lib DOM,ESNext --target ES2020 --strict --skipLibCheck --module commonjs \
     --types /usr/local/share/.config/yarn/global/node_modules/@types/node \
     program.ts
 
