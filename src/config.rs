@@ -31,6 +31,12 @@ pub struct Language {
     pub timeout: f64,
     #[serde(default = "default_retries")]
     pub retries: u8,
+    #[serde(default = "default_max_process_count")]
+    pub max_process_count: u32,
+    #[serde(default = "default_max_open_files")]
+    pub max_open_files: u32,
+    #[serde(default = "default_max_file_size")]
+    pub max_file_size: u32,
 }
 
 impl Config {
@@ -67,6 +73,9 @@ impl Default for Language {
             runtime: String::from("runc"),
             timeout: 30.0,
             retries: 3,
+            max_process_count: 128,
+            max_open_files: 2048,
+            max_file_size: 20_000_000,
         }
     }
 }
@@ -101,4 +110,16 @@ const fn default_true() -> bool {
 
 const fn default_false() -> bool {
     false
+}
+
+const fn default_max_process_count() -> u32 {
+    128
+}
+
+const fn default_max_open_files() -> u32 {
+    2048
+}
+
+const fn default_max_file_size() -> u32 {
+    20_000_000
 }

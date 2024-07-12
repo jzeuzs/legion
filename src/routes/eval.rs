@@ -11,31 +11,48 @@ use serde::{Deserialize, Serialize};
 use tokio::process::Command;
 use tokio::time::{sleep, Duration};
 use tracing::{error, info, warn};
+use utoipa::ToSchema;
 
 use crate::docker::{container_exists, exec, start_container};
 use crate::{Config, Result};
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
 pub struct Eval {
+    #[schema(example = "javascript")]
     language: String,
+    #[schema(example = "console.log('Hello, World!');")]
     code: String,
     input: Option<String>,
     args: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
 pub struct EvalResult {
+    #[schema(example = "Hello, World!")]
     stdout: String,
     stderr: String,
     status: EvalStatus,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, ToSchema)]
 pub struct EvalStatus {
+    #[schema(example = true)]
     success: bool,
+    #[schema(example = 0)]
     code: Option<i32>,
 }
 
+#[utoipa::path(
+    post,
+    path = "/api/eval",
+    request_body = Eval,
+    responses(
+        (status = 200, body = EvalResult),
+        (status = 500, description = "Server error."),
+        (status = 404, description = "Language is not enabled or does not exist."),
+        (status = 408, description = "Execution timeout.")
+    )
+)]
 pub async fn eval(State(config): State<Config>, Json(payload): Json<Eval>) -> Result<Response> {
     if !config.language.enabled.contains(&payload.language) {
         return Ok((
@@ -100,9 +117,9 @@ pub async fn eval(State(config): State<Config>, Json(payload): Json<Eval>) -> Re
                 exec(&["kill", &format!("legion-{}", payload.language)]).await?;
                 start_container(&payload.language, &config.language).await?;
 
-                return Ok((StatusCode::GATEWAY_TIMEOUT, "Eval timed out.".to_string()).into_response())
+                return Ok((StatusCode::REQUEST_TIMEOUT, "Eval timed out.".to_string()).into_response())
             },
-            output = _eval(&payload.language, &payload.code, payload.input.as_deref(), payload.args.as_deref(), &id) => {
+            output = _eval(&payload.language, &payload.code, payload.input.as_deref(), payload.args.as_deref(), &id, config.clone()) => {
                 match output {
                     Ok(output)  => {
                         if success || output.status.success() {
@@ -157,6 +174,7 @@ async fn _eval(
     input: Option<&str>,
     args: Option<&[String]>,
     uid: &str,
+    config: Config,
 ) -> Result<Output> {
     let mut cmd = Command::new("docker");
 
@@ -166,6 +184,11 @@ async fn _eval(
         "-i",
         &format!("-w/tmp/eval/{}", uid),
         &format!("legion-{}", language),
+        "nice",
+        "prlimit",
+        &format!("--nproc={}", config.language.max_process_count),
+        &format!("--nofile={}", config.language.max_open_files),
+        &format!("--fsize={}", config.language.max_file_size),
         "/bin/sh",
         "/var/run/run.sh",
         code,
@@ -232,7 +255,7 @@ mod test {
                             .oneshot(
                                 Request::builder()
                                     .method(Method::POST)
-                                    .uri("/eval")
+                                    .uri("/api/eval")
                                     .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
                                     .body(Body::from(
                                         serde_json::to_string(&Eval {
@@ -293,7 +316,7 @@ mod test {
                             .oneshot(
                                 Request::builder()
                                     .method(Method::POST)
-                                    .uri("/eval")
+                                    .uri("/api/eval")
                                     .header(header::CONTENT_TYPE, mime::APPLICATION_JSON.as_ref())
                                     .body(Body::from(
                                         serde_json::to_string(&Eval {
@@ -337,8 +360,6 @@ mod test {
         crystal, ".cr";
         csharp, ".cs";
         deno, ".ts";
-        elixir, ".exs";
-        erlang, ".erl";
         fsharp, ".fs";
         haskell, ".hs";
         java, ".java";

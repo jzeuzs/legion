@@ -34,6 +34,9 @@ RUN wget https://storage.googleapis.com/gvisor/releases/nightly/latest/runsc \
     && chown root:root /usr/local/bin/runsc \
     && chmod 0755 /usr/local/bin/runsc
 
+# rustfmt
+RUN rustup toolchain install nightly && rustup component add rustfmt --toolchain nightly
+
 # Setting the ENTRYPOINT to docker-init.sh will configure non-root access to 
 # the Docker socket if "overrideCommand": false is set in devcontainer.json. 
 # The script will also execute CMD if you need to alter startup behaviors.

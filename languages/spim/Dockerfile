@@ -1,6 +1,6 @@
 FROM alpine as build
 
-RUN apk add --no-cache build-base bison flex git && \
+RUN apk add --no-cache build-base bison flex git util-linux && \
     git clone https://github.com/TryItOnline/spim.git /opt/spim && \
     cd /opt/spim && \
     make && \

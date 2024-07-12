@@ -11,5 +11,6 @@ RUN apk add build-base git cmake --no-cache && \
 
 FROM alpine:latest
 
+RUN apk add util-linux --no-cache
 COPY --from=build /usr/local/bin/lci /usr/local/bin/
 COPY run.sh /var/run/

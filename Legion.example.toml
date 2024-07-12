@@ -33,3 +33,12 @@ timeout = 30
 
 # The maximum number of retries when the evaluation fails for a non-timeout related cause.
 retries = 3
+
+# Maximum number of processes per evaluation.
+max-process-count = 128
+
+# Maximum number of open files per evaluation
+max-open-files = 2048
+
+# Maximum file size in bytes for a file.
+max-file-size = 20_000_000

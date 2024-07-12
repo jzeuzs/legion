@@ -6,5 +6,7 @@ RUN apk add build-base --no-cache && \
 
 FROM alpine
 
+RUN apk add util-linux --no-cache
+
 COPY --from=build brainfuck /usr/local/bin/
 COPY run.sh /var/run/
