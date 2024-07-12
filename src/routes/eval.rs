@@ -360,8 +360,6 @@ mod test {
         crystal, ".cr";
         csharp, ".cs";
         deno, ".ts";
-        elixir, ".exs";
-        erlang, ".erl";
         fsharp, ".fs";
         haskell, ".hs";
         java, ".java";
