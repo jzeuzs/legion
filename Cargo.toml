@@ -40,6 +40,10 @@ features = ["axum_extras"]
 version = "7.1.0"
 features = ["axum"]
 
+[dependencies.tower-http]
+version = "0.5.2"
+features = ["trace"]
+
 [dev-dependencies]
 http-body-util = "0.1.2"
 mime = "0.3.17"

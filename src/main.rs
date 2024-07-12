@@ -12,6 +12,8 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use ::config::{Config as ConfigBuilder, Environment, File};
+use axum::extract::MatchedPath;
+use axum::http::Request;
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::Router;
@@ -19,6 +21,9 @@ use docs::Docs;
 use routes::{cleanup, containers, eval, languages};
 use tokio::net::TcpListener;
 use tokio::time;
+use tower_http::trace::{DefaultOnRequest, DefaultOnResponse, TraceLayer};
+use tower_http::LatencyUnit;
+use tracing::{info_span, Level};
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, EnvFilter};
@@ -41,9 +46,9 @@ async fn main() -> Result<()> {
         .with(fmt::layer())
         .with(
             EnvFilter::builder()
-                .with_env_var("LEGION_LOG")
                 .with_default_directive(LevelFilter::INFO.into())
-                .parse_lossy(""),
+                .with_env_var("LEGION_LOG")
+                .parse_lossy("axum::rejection=trace"),
         )
         .init();
 
@@ -101,5 +106,22 @@ pub fn app(config: Config) -> Router {
         .route("/api/containers", get(containers::containers))
         .route("/api/eval", post(eval::eval))
         .route("/api/languages", get(languages::languages))
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(|request: &Request<_>| {
+                    let matched_path =
+                        request.extensions().get::<MatchedPath>().map(MatchedPath::as_str);
+
+                    info_span!(
+                        "http_request",
+                        method = ?request.method(),
+                        matched_path
+                    )
+                })
+                .on_request(DefaultOnRequest::new().level(Level::INFO))
+                .on_response(
+                    DefaultOnResponse::new().level(Level::INFO).latency_unit(LatencyUnit::Micros),
+                ),
+        )
         .with_state(config)
 }
