@@ -8,6 +8,8 @@
     clippy::missing_errors_doc
 )]
 
+#[cfg(not(unix))]
+use std::future;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -20,13 +22,14 @@ use axum::Router;
 use docs::Docs;
 use routes::{cleanup, containers, eval, languages};
 use tokio::net::TcpListener;
-use tokio::time;
+use tokio::{signal, time};
 use tower_http::trace::{DefaultOnRequest, DefaultOnResponse, TraceLayer};
 use tower_http::LatencyUnit;
-use tracing::{info_span, Level};
+use tracing::{info_span, warn, Level};
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, EnvFilter};
+use util::{check_if_docker_exists, print_intro};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -46,9 +49,9 @@ async fn main() -> Result<()> {
         .with(fmt::layer())
         .with(
             EnvFilter::builder()
-                .with_default_directive(LevelFilter::INFO.into())
                 .with_env_var("LEGION_LOG")
-                .parse_lossy("axum::rejection=trace"),
+                .with_default_directive(LevelFilter::INFO.into())
+                .parse_lossy(""),
         )
         .init();
 
@@ -60,8 +63,10 @@ async fn main() -> Result<()> {
         .try_deserialize()
         .expect("Deserializing config failed");
 
+    print_intro(&Arc::new(config.clone()))?;
+
     if !config.skip_docker_check {
-        util::check_if_docker_exists().expect("Checking for docker failed");
+        check_if_docker_exists().expect("Checking for docker failed");
     }
 
     docker::build_images(&config.language.enabled, config.update_images).await?;
@@ -90,10 +95,10 @@ async fn main() -> Result<()> {
         }
     });
 
-    let app = app(config);
+    let app = app(config.clone());
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).await?;
 
-    axum::serve(listener, app).await?;
+    axum::serve(listener, app).with_graceful_shutdown(shutdown_signal(config)).await?;
 
     Ok(())
 }
@@ -124,4 +129,28 @@ pub fn app(config: Config) -> Router {
                 ),
         )
         .with_state(config)
+}
+
+#[allow(clippy::ignored_unit_patterns)]
+async fn shutdown_signal(config: Config) {
+    let ctrl_c = async {
+        signal::ctrl_c().await.unwrap();
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate()).unwrap().recv().await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    };
+
+    warn!("Shutdown signal received. Killing containers.");
+
+    docker::kill_containers(&config.language.enabled).await.expect("Failed killing containers");
 }
