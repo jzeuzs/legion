@@ -7,13 +7,14 @@ use tokio::process::Command;
 use tracing::{info, warn};
 
 use crate::config::Language;
+use crate::util::format_string_vec;
 
 /// Executes a docker command.
 ///
 /// # Errors
 ///
 /// - When the Docker CLI is not on your `PATH`.
-#[tracing::instrument]
+#[tracing::instrument(skip(args))]
 pub async fn exec(args: &[&str]) -> Result<Output> {
     let output = Command::new("docker")
         .args(args)
@@ -35,7 +36,7 @@ pub async fn exec(args: &[&str]) -> Result<Output> {
 /// # Panics
 ///
 /// - When starting the container fails.
-#[tracing::instrument]
+#[tracing::instrument(skip(config))]
 pub async fn start_container(language: &str, config: &Language) -> Result<()> {
     let image = format!("legion-{}", language);
 
@@ -148,7 +149,7 @@ pub async fn build_images(languages: &[String], update_images: bool) -> Result<(
 /// # Panics
 ///
 /// - When starting the container fails.
-#[tracing::instrument]
+#[tracing::instrument(skip(config))]
 pub async fn prepare_containers(languages: &[String], config: &Language) -> Result<()> {
     info!("{}", "Preparing containers...".blue());
 
@@ -180,18 +181,24 @@ pub async fn prepare_containers(languages: &[String], config: &Language) -> Resu
 /// - When killing the container fails.
 #[tracing::instrument]
 pub async fn kill_containers(languages: &[String]) -> Result<()> {
-    async fn kill_container(language: String) {
-        info!("Killing container {}...", format!("legion-{}", language).bold().underline());
-        exec(&["kill", &format!("legion-{}", language)]).await.expect("Failed killing container");
-        info!("Killed container {}.", format!("legion-{}", language).bold().underline());
-    }
+    let formatted_languages = format_string_vec(languages);
+
+    info!("Killing containers {}...", formatted_languages.underline());
 
     let languages = languages.to_vec();
 
-    stream::iter(languages.into_iter().map(|language| tokio::spawn(kill_container(language))))
-        .buffer_unordered(10)
-        .collect::<Vec<_>>()
-        .await;
+    stream::iter(languages.into_iter().map(|language| {
+        tokio::spawn(async move {
+            exec(&["kill", &format!("legion-{}", language)])
+                .await
+                .expect("Failed killing container")
+        })
+    }))
+    .buffer_unordered(10)
+    .collect::<Vec<_>>()
+    .await;
+
+    info!("Killed containers {}.", formatted_languages.underline());
 
     Ok(())
 }
