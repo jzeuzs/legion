@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.0.0](https://github.com/jzeuzs/legion/compare/v0.1.3...v1.0.0) (2024-07-15)
+
+
+### ⚠ BREAKING CHANGES
+
+* rewrite http server to axum ([#71](https://github.com/jzeuzs/legion/issues/71))
+* remove cache ([#70](https://github.com/jzeuzs/legion/issues/70))
+
+### Features
+
+* **api:** add logging ([#76](https://github.com/jzeuzs/legion/issues/76)) ([ef44842](https://github.com/jzeuzs/legion/commit/ef44842522d36b5cea6be9e6704829a459357601))
+* **docs:** add api documentation ([#75](https://github.com/jzeuzs/legion/issues/75)) ([e83329d](https://github.com/jzeuzs/legion/commit/e83329d1cb22e6691424c87dc1e95592fcc1ceb7))
+* **eval:** add input tests ([#72](https://github.com/jzeuzs/legion/issues/72)) ([dc88921](https://github.com/jzeuzs/legion/commit/dc88921b3fcbd7030e4a9afc90021d3785f1906a))
+* remove cache ([#70](https://github.com/jzeuzs/legion/issues/70)) ([439358c](https://github.com/jzeuzs/legion/commit/439358c6ddb6c84e670d74f0dcff503e9257848c))
+* rewrite http server to axum ([#71](https://github.com/jzeuzs/legion/issues/71)) ([8010af9](https://github.com/jzeuzs/legion/commit/8010af95f810eb33f8b8071ab9b18228b63547dd))
+
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([#35](https://github.com/jzeuzs/legion/issues/35)) ([705cec5](https://github.com/jzeuzs/legion/commit/705cec53bf008c6fcfa67d2bda23ece8865dc33e))
+* **deps:** update all non-major dependencies ([#45](https://github.com/jzeuzs/legion/issues/45)) ([f5694c9](https://github.com/jzeuzs/legion/commit/f5694c9435dac622c67d1e2d75016423c1bd8bc7))
+* **deps:** update all non-major dependencies ([#60](https://github.com/jzeuzs/legion/issues/60)) ([9f8ba9b](https://github.com/jzeuzs/legion/commit/9f8ba9b35ebbeeaff4863ba8759f743c05cb4a21))
+* **deps:** update rust crate libc to 0.2.137 ([#40](https://github.com/jzeuzs/legion/issues/40)) ([6a95231](https://github.com/jzeuzs/legion/commit/6a95231ef2996d4643cabcaa28a557e1e7cf9eed))
+* **deps:** update rust crate moka to 0.9.5 ([#43](https://github.com/jzeuzs/legion/issues/43)) ([7f45b39](https://github.com/jzeuzs/legion/commit/7f45b3984911a13a911daecfbeddf541c2773445))
+* **deps:** update rust crate owo-colors to v4 ([#69](https://github.com/jzeuzs/legion/issues/69)) ([0849901](https://github.com/jzeuzs/legion/commit/0849901f9e4744da96024e15c1c481249d535f33))
+* **workflow:** move to new release please action ([#53](https://github.com/jzeuzs/legion/issues/53)) ([53d5a9d](https://github.com/jzeuzs/legion/commit/53d5a9dea019fa0689e6856f4babb3b4d13155c1))
+
 ## [0.1.3](https://github.com/jzeuzs/legion/compare/v0.1.2...v0.1.3) (2022-10-16)
 
 
