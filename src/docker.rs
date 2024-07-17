@@ -1,31 +1,21 @@
-use std::process::{Output, Stdio};
+use std::collections::HashMap;
+use std::sync::Arc;
 
-use anyhow::Result;
+use anyhow::Context;
+use bollard::container::{
+    Config,
+    CreateContainerOptions,
+    ListContainersOptions,
+    RemoveContainerOptions,
+};
+use bollard::image::{BuildImageOptions, ListImagesOptions};
+use bollard::models::HostConfig;
 use futures_util::stream::{self, StreamExt};
 use owo_colors::OwoColorize;
-use tokio::process::Command;
-use tracing::{info, warn};
+use tracing::{error, info, warn};
 
-use crate::config::Language;
 use crate::util::format_string_vec;
-
-/// Executes a docker command.
-///
-/// # Errors
-///
-/// - When the Docker CLI is not on your `PATH`.
-#[tracing::instrument(skip(args))]
-pub async fn exec(args: &[&str]) -> Result<Output> {
-    let output = Command::new("docker")
-        .args(args)
-        .stderr(Stdio::piped())
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .output()
-        .await?;
-
-    Ok(output)
-}
+use crate::{AppState, Result};
 
 /// Starts a docker container with the provided `language` and an optional `runtime`.
 ///
@@ -36,44 +26,48 @@ pub async fn exec(args: &[&str]) -> Result<Output> {
 /// # Panics
 ///
 /// - When starting the container fails.
-#[tracing::instrument(skip(config))]
-pub async fn start_container(language: &str, config: &Language) -> Result<()> {
+#[tracing::instrument(skip(state, language))]
+pub async fn start_container(state: &Arc<AppState>, language: &str) -> Result<()> {
     let image = format!("legion-{}", language);
+    let exists = container_exists(state, language).await?;
 
-    let is_running = exec(&["inspect", &image, "--format", "'{{.State.Status}}'"]).await?;
+    if exists {
+        let inspect = state.docker.inspect_container(&image, None).await?;
+        let is_running =
+            if let Some(state) = inspect.state { state.running.unwrap_or(false) } else { false };
 
-    if String::from_utf8_lossy(&is_running.stdout).contains("running") {
-        return Ok(());
+        if is_running {
+            return Ok(());
+        }
     }
 
-    let output = exec(&[
-        "run",
-        &format!("--runtime={}", config.runtime),
-        "--rm",
-        &format!("--name={}", image),
-        "-u1000:1000",
-        "-w/tmp/",
-        "-dt",
-        "--net=none",
-        &format!("--cpus={}", config.cpus),
-        &format!("-m={}m", config.memory),
-        &format!("--memory-swap={}m", config.memory),
-        &image,
-        "/bin/sh",
-    ])
-    .await?;
+    let create_container_options = CreateContainerOptions {
+        name: image.as_str(),
+        ..Default::default()
+    };
 
-    assert!(
-        output.status.success(),
-        "Starting container {} failed: {}",
-        image.bold().underline(),
-        String::from_utf8_lossy(if output.stderr.is_empty() {
-            &output.stdout
-        } else {
-            &output.stderr
-        })
-        .bright_red()
-    );
+    let container_config = Config {
+        image: Some(image.as_str()),
+        user: Some("1000:1000"),
+        tty: Some(true),
+        cmd: Some(vec!["/bin/sh"]),
+        network_disabled: Some(true),
+        working_dir: Some("/tmp/"),
+        host_config: Some(HostConfig {
+            runtime: Some(state.config.language.runtime.clone()),
+            ..Default::default()
+        }),
+        ..Default::default()
+    };
+
+    state.docker.create_container(Some(create_container_options), container_config).await?;
+    state.docker.start_container::<String>(image.as_str(), None).await?;
+
+    let inspect = state.docker.inspect_container(&image, None).await?;
+    let is_running =
+        if let Some(state) = inspect.state { state.running.unwrap_or(false) } else { false };
+
+    assert!(is_running, "Starting container {} failed.", image.bold().underline());
 
     Ok(())
 }
@@ -87,53 +81,70 @@ pub async fn start_container(language: &str, config: &Language) -> Result<()> {
 /// # Panics
 ///
 /// - When building the image fails.
-#[tracing::instrument]
-pub async fn build_images(languages: &[String], update_images: bool) -> Result<()> {
-    async fn build_image(language: String, update_images: bool) {
-        let output = &exec(&["images", "-q", &format!("legion-{}", language)])
-            .await
-            .expect("Failed checking images");
+#[tracing::instrument(skip(state))]
+pub async fn build_images(state: &Arc<AppState>) -> Result<()> {
+    async fn build_image(
+        state: Arc<AppState>,
+        language: String,
+        update_images: bool,
+    ) -> Result<()> {
+        let list_image_options: ListImagesOptions<String> = ListImagesOptions {
+            all: true,
+            ..Default::default()
+        };
 
-        let is_image_present = String::from_utf8_lossy(&output.stdout);
+        let output = state.docker.list_images(Some(list_image_options)).await?;
+        let is_image_present =
+            output.iter().any(|image| image.repo_tags.contains(&format!("legion-{}", language)));
 
-        if update_images || is_image_present.trim().is_empty() {
+        if update_images || is_image_present {
             info!("Building image {}...", format!("legion-{}", language).bold().underline());
 
-            let output = exec(&[
-                "build",
-                "-t",
-                &format!("legion-{}", language),
-                &format!("languages/{}", language),
-            ])
-            .await
-            .expect("Failed building image");
+            let build_image_options = BuildImageOptions {
+                dockerfile: "Dockerfile".to_string(),
+                t: format!("legion-{}", language),
+                ..Default::default()
+            };
 
-            assert!(
-                output.status.success(),
-                "Building image {} failed: {}",
-                format!("legion-{}", language).bold().underline(),
-                String::from_utf8_lossy(if output.stderr.is_empty() {
-                    &output.stdout
-                } else {
-                    &output.stderr
-                })
-                .bright_red()
-            );
+            let compressed = languages::get_language(&language).context("language not found")?;
+            let mut output =
+                state.docker.build_image(build_image_options, None, Some(compressed.into()));
+
+            while let Some(Ok(ref info)) = output.next().await {
+                if info.error.is_some() || info.error_detail.is_some() {
+                    error!(
+                        "Building image {} failed: {:?}",
+                        format!("legion-{}", language).bold().underline(),
+                        info.bright_red()
+                    );
+                }
+            }
 
             info!("Finished building image {}.", format!("legion-{}", language).bold().underline());
         }
+
+        Ok(())
     }
 
     info!("{}", "Building images...".blue());
 
-    let languages = languages.to_vec();
+    let languages = state.config.language.enabled.clone();
+    let update_images = state.config.update_images;
 
-    stream::iter(
-        languages.into_iter().map(|language| tokio::spawn(build_image(language, update_images))),
+    let results: Result<()> = stream::iter(
+        languages
+            .into_iter()
+            .map(|language| tokio::spawn(build_image(state.clone(), language, update_images))),
     )
     .buffer_unordered(10)
     .collect::<Vec<_>>()
-    .await;
+    .await
+    .into_iter()
+    .collect::<std::result::Result<_, _>>()
+    .into_iter()
+    .collect();
+
+    results?;
 
     info!("{}", "Finished building images.".green());
 
@@ -149,12 +160,12 @@ pub async fn build_images(languages: &[String], update_images: bool) -> Result<(
 /// # Panics
 ///
 /// - When starting the container fails.
-#[tracing::instrument(skip(config))]
-pub async fn prepare_containers(languages: &[String], config: &Language) -> Result<()> {
+#[tracing::instrument(skip(state))]
+pub async fn prepare_containers(state: &Arc<AppState>) -> Result<()> {
     info!("{}", "Preparing containers...".blue());
 
-    for language in languages {
-        let container_exists = container_exists(language).await?;
+    for language in &state.config.language.enabled {
+        let container_exists = container_exists(state, language).await?;
 
         if container_exists {
             warn!(
@@ -162,10 +173,19 @@ pub async fn prepare_containers(languages: &[String], config: &Language) -> Resu
                 format!("Container legion-{} already exists. Restarting.", language).bright_red()
             );
 
-            exec(&["kill", &format!("legion-{}", language)]).await?;
-            start_container(language, config).await?;
+            let remove_container_options = RemoveContainerOptions {
+                force: true,
+                ..Default::default()
+            };
+
+            state
+                .docker
+                .remove_container(&format!("legion-{}", language), Some(remove_container_options))
+                .await?;
+
+            start_container(state, language).await?;
         } else {
-            start_container(language, config).await?;
+            start_container(state, language).await?;
         }
     }
 
@@ -174,31 +194,39 @@ pub async fn prepare_containers(languages: &[String], config: &Language) -> Resu
     Ok(())
 }
 
-/// Kill running containers.
+/// Remove running containers.
 ///
 /// # Errors
 ///
-/// - When killing the container fails.
-#[tracing::instrument]
-pub async fn kill_containers(languages: &[String]) -> Result<()> {
-    let formatted_languages = format_string_vec(languages);
+/// - When removing the container fails.
+#[tracing::instrument(skip(state))]
+pub async fn remove_containers(state: &Arc<AppState>) -> Result<()> {
+    let languages = state.config.language.enabled.clone();
+    let formatted_languages = format_string_vec(&languages);
 
-    info!("Killing containers {}...", formatted_languages.underline());
-
-    let languages = languages.to_vec();
+    info!("Removing containers {}...", formatted_languages.underline());
 
     stream::iter(languages.into_iter().map(|language| {
+        let state = state.clone();
+
         tokio::spawn(async move {
-            exec(&["kill", &format!("legion-{}", language)])
+            let remove_container_options = RemoveContainerOptions {
+                force: true,
+                ..Default::default()
+            };
+
+            state
+                .docker
+                .remove_container(&format!("legion-{}", language), Some(remove_container_options))
                 .await
-                .expect("Failed killing container")
+                .unwrap();
         })
     }))
     .buffer_unordered(10)
     .collect::<Vec<_>>()
     .await;
 
-    info!("Killed containers {}.", formatted_languages.underline());
+    info!("Removed containers {}.", formatted_languages.underline());
 
     Ok(())
 }
@@ -209,6 +237,22 @@ pub async fn kill_containers(languages: &[String]) -> Result<()> {
 ///
 /// - When the Docker CLI is not on your `PATH`.
 #[tracing::instrument]
-pub async fn container_exists(language: &str) -> Result<bool> {
-    Ok(exec(&["top", &format!("legion-{}", language)]).await?.status.success())
+pub async fn container_exists(state: &Arc<AppState>, language: &str) -> Result<bool> {
+    let mut filters = HashMap::new();
+    filters.insert("name".to_string(), vec![format!("legion-{}", language)]);
+
+    let list_container_options = ListContainersOptions {
+        filters,
+        all: true,
+        ..Default::default()
+    };
+
+    let output = state.docker.list_containers(Some(list_container_options)).await?;
+    let exists = !output.is_empty();
+
+    Ok(exists)
+}
+
+mod languages {
+    include!(concat!(env!("OUT_DIR"), "/languages.rs"));
 }

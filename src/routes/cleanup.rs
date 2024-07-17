@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
-use crate::docker::kill_containers;
-use crate::{Config, Result};
+use crate::docker::remove_containers;
+use crate::{AppState, Result};
 
 #[utoipa::path(
     post,
@@ -13,8 +15,8 @@ use crate::{Config, Result};
         (status = 500, description = "Server error.")
     )
 )]
-pub async fn cleanup(State(config): State<Config>) -> Result<Response> {
-    kill_containers(&config.language.enabled).await?;
+pub async fn cleanup(State(state): State<Arc<AppState>>) -> Result<Response> {
+    remove_containers(&state).await?;
 
     Ok(StatusCode::NO_CONTENT.into_response())
 }

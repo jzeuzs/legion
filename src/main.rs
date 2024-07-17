@@ -19,6 +19,7 @@ use axum::http::Request;
 use axum::response::Redirect;
 use axum::routing::{get, post};
 use axum::Router;
+use bollard::Docker;
 use docs::Docs;
 use routes::{cleanup, containers, eval, languages};
 use tokio::net::TcpListener;
@@ -29,7 +30,7 @@ use tracing::{info_span, warn, Level};
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::{fmt, EnvFilter};
-use util::{check_if_docker_exists, print_intro};
+use util::print_intro;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -42,6 +43,12 @@ mod util;
 
 pub type Result<T> = anyhow::Result<T, error::AppError>;
 pub type Config = Arc<config::Config>;
+
+#[derive(Debug)]
+pub struct AppState {
+    config: config::Config,
+    docker: Docker,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -63,47 +70,45 @@ async fn main() -> Result<()> {
         .try_deserialize()
         .expect("Deserializing config failed");
 
-    print_intro(&Arc::new(config.clone()))?;
+    let docker = Docker::connect_with_socket_defaults()?;
 
-    if !config.skip_docker_check {
-        check_if_docker_exists().expect("Checking for docker failed");
+    let state = Arc::new(AppState {
+        config,
+        docker,
+    });
+
+    print_intro(&Arc::new(state.config.clone()))?;
+    docker::build_images(&state).await?;
+
+    if state.config.prepare_containers {
+        docker::prepare_containers(&state).await?;
     }
 
-    docker::build_images(&config.language.enabled, config.update_images).await?;
-
-    if config.prepare_containers {
-        docker::prepare_containers(&config.language.enabled, &config.language).await?;
-    }
-
-    let port = config.port.unwrap_or(3000);
-
-    let config = Arc::new(config);
-    let config_2 = Arc::clone(&config);
+    let port = state.config.port.unwrap_or(3000);
+    let state_2 = state.clone();
 
     tokio::spawn(async move {
         let mut interval =
-            time::interval(Duration::from_secs_f64(config_2.cleanup_interval * 60.0));
+            time::interval(Duration::from_secs_f64(state_2.config.cleanup_interval * 60.0));
 
         // ticks immediately
         interval.tick().await;
 
         loop {
             interval.tick().await;
-            docker::kill_containers(&config_2.language.enabled)
-                .await
-                .expect("Failed killing containers");
+            docker::remove_containers(&state_2).await.expect("Failed killing containers");
         }
     });
 
-    let app = app(config.clone());
+    let app = app(state.clone());
     let listener = TcpListener::bind(format!("127.0.0.1:{}", port)).await?;
 
-    axum::serve(listener, app).with_graceful_shutdown(shutdown_signal(config)).await?;
+    axum::serve(listener, app).with_graceful_shutdown(shutdown_signal(state)).await?;
 
     Ok(())
 }
 
-pub fn app(config: Config) -> Router {
+pub fn app(state: Arc<AppState>) -> Router {
     Router::new()
         .merge(SwaggerUi::new("/docs").url("/api-docs/openapi.json", Docs::openapi()))
         .route("/", get(|| async { Redirect::temporary("/docs") }))
@@ -128,11 +133,11 @@ pub fn app(config: Config) -> Router {
                     DefaultOnResponse::new().level(Level::INFO).latency_unit(LatencyUnit::Micros),
                 ),
         )
-        .with_state(config)
+        .with_state(state)
 }
 
 #[allow(clippy::ignored_unit_patterns)]
-async fn shutdown_signal(config: Config) {
+async fn shutdown_signal(state: Arc<AppState>) {
     let ctrl_c = async {
         signal::ctrl_c().await.unwrap();
     };
@@ -151,6 +156,5 @@ async fn shutdown_signal(config: Config) {
     };
 
     warn!("Shutdown signal received. Killing containers.");
-
-    docker::kill_containers(&config.language.enabled).await.expect("Failed killing containers");
+    docker::remove_containers(&state).await.expect("Failed killing containers");
 }
