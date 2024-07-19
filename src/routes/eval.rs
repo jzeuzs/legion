@@ -319,7 +319,6 @@ mod test {
                         };
 
                         let docker = Docker::connect_with_socket_defaults().unwrap();
-
                         let state = Arc::new(AppState {
                             config,
                             docker,
@@ -327,10 +326,7 @@ mod test {
 
                         let app = app(state.clone());
 
-                        if option_env!("LEGION_TEST_BUILD").unwrap_or("0") != "0" {
-                            build_images(&state).await.expect("Failed building images");
-                        }
-
+                        build_images(&state).await.expect("Failed building images");
                         prepare_containers(&state).await.expect("Failed preparing containers.");
 
                         let response = app
@@ -378,7 +374,6 @@ mod test {
                         };
 
                         let docker = Docker::connect_with_socket_defaults().unwrap();
-
                         let state = Arc::new(AppState {
                             config,
                             docker,
@@ -386,10 +381,7 @@ mod test {
 
                         let app = app(state.clone());
 
-                        if option_env!("LEGION_TEST_BUILD").unwrap_or("0") != "0" {
-                            build_images(&state).await.expect("Failed building images");
-                        }
-
+                        build_images(&state).await.expect("Failed building images");
                         prepare_containers(&state).await.expect("Failed preparing containers.");
 
                         let input = nanoid!();

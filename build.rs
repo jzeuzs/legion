@@ -34,7 +34,7 @@ fn compress_languages() -> Result<()> {
 
             let const_ident = Ident::new(&dir_name.to_uppercase(), Span::call_site());
             let const_decl = quote! {
-                pub const #const_ident: &'static [u8] = &[
+                pub const #const_ident: &[u8] = &[
                     #(#tar),*
                 ];
             };
