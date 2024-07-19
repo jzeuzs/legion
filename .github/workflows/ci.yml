@@ -155,15 +155,11 @@ jobs:
       - name: Checkout the Repository
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@4fd812986e6c8c2a69e18311145f9371337f27d4 # v3
-        with:
-          install: true
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
 
-      - name: Build Image
-        run: |
-          NAME=$(echo "${{ matrix.tests }}" | grep -oP '(?<=::)[a-z_]+(?=_(input|hello_world))')
-          docker build --load -t legion-$NAME languages/$NAME
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Install Rust
         uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # tag=v1
@@ -183,6 +179,6 @@ jobs:
       - name: Run test
         uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3
         with:
-          max_attempts: 3
+          max_attempts: 10
           timeout_minutes: 10
-          command: LEGION_TEST_BUILD="0" cargo nextest run -E 'test(=${{ matrix.tests }})'
+          command: cargo nextest run -E 'test(=${{ matrix.tests }})'

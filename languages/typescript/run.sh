@@ -8,3 +8,4 @@ tsc --lib DOM,ESNext --target ES2020 --strict --skipLibCheck --module commonjs \
     program.ts
 
 node program.js "$@" < .input
+printf '%s' "$?"

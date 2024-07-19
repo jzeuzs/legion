@@ -5,3 +5,4 @@ echo "$2" > .input
 rustc -C opt-level=0 --color never program.rs
 shift 2
 ./program "$@" < .input
+printf '%s' "$?"

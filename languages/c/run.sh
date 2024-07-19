@@ -5,3 +5,4 @@ gcc program.c -o program
 echo "$2" > .input
 shift 2
 ./program "$@" < .input
+printf '%s' "$?"

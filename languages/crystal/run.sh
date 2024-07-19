@@ -5,3 +5,4 @@ crystal build program.cr
 echo "$2" > .input
 shift 2
 ./program "$@" < .input
+printf '%s' "$?"

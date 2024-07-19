@@ -1,6 +1,6 @@
 # legion
 
-[![Rust: 1.59+](https://img.shields.io/badge/rust-1.59+-93450a)](https://blog.rust-lang.org/2022/02/24/Rust-1.59.0.html)
+[![Rust: 1.79+](https://img.shields.io/badge/rust-1.79+-93450a)](https://blog.rust-lang.org/2024/06/13/Rust-1.79.0.html)
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 [![Continuous Integration](https://github.com/jzeuzs/legion/actions/workflows/ci.yml/badge.svg)](https://github.com/jzeuzs/legion/actions/workflows/ci.yml)
 [![Continuous Delivery](https://github.com/jzeuzs/legion/actions/workflows/cd.yml/badge.svg)](https://github.com/jzeuzs/legion/actions/workflows/cd.yml)

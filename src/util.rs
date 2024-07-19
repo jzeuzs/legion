@@ -1,5 +1,3 @@
-use std::process::{self, Command, Stdio};
-
 use anyhow::Context;
 use guess_host_triple::guess_host_triple;
 use owo_colors::OwoColorize;
@@ -11,27 +9,6 @@ macro_rules! println_centered {
     ($width:expr, $text:expr) => {
         println!("{}", console::pad_str($text, $width as usize, console::Alignment::Center, None));
     };
-}
-
-pub fn check_if_docker_exists() -> Result<()> {
-    let cmd = Command::new("docker")
-        .arg("version")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .stdin(Stdio::null())
-        .status()?;
-
-    if !cmd.success() {
-        println!(
-            "The {} binary is missing. Maybe its missing on the {} environment variable?",
-            "docker".bold().blue(),
-            "$PATH".bold()
-        );
-
-        process::exit(libc::EXIT_FAILURE);
-    }
-
-    Ok(())
 }
 
 pub fn format_string_vec(arr: &[String]) -> String {
@@ -67,6 +44,6 @@ pub fn print_intro(config: &Config) -> Result<()> {
     Ok(())
 }
 
-pub mod built_info {
+mod built_info {
     include!(concat!(env!("OUT_DIR"), "/built.rs"));
 }
