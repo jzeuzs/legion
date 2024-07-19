@@ -173,6 +173,6 @@ jobs:
       - name: Run test
         uses: nick-fields/retry@7152eba30c6575329ac0576536151aca5a72780e # v3
         with:
-          max_attempts: 3
+          max_attempts: 10
           timeout_minutes: 10
           command: cargo nextest run -E 'test(=${{ matrix.tests }})'

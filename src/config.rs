@@ -22,7 +22,7 @@ pub struct Config {
 pub struct Language {
     pub enabled: Vec<String>,
     #[serde(default = "default_memory")]
-    pub memory: u32,
+    pub memory: i64,
     #[serde(default = "default_cpus")]
     pub cpus: f64,
     #[serde(default = "default_runtime")]
@@ -32,11 +32,11 @@ pub struct Language {
     #[serde(default = "default_retries")]
     pub retries: u8,
     #[serde(default = "default_max_process_count")]
-    pub max_process_count: u32,
+    pub max_process_count: u64,
     #[serde(default = "default_max_open_files")]
-    pub max_open_files: u32,
+    pub max_open_files: u64,
     #[serde(default = "default_max_file_size")]
-    pub max_file_size: u32,
+    pub max_file_size: u64,
 }
 
 impl Config {
@@ -80,7 +80,7 @@ impl Default for Language {
     }
 }
 
-const fn default_memory() -> u32 {
+const fn default_memory() -> i64 {
     512
 }
 
@@ -112,14 +112,14 @@ const fn default_false() -> bool {
     false
 }
 
-const fn default_max_process_count() -> u32 {
+const fn default_max_process_count() -> u64 {
     128
 }
 
-const fn default_max_open_files() -> u32 {
+const fn default_max_open_files() -> u64 {
     2048
 }
 
-const fn default_max_file_size() -> u32 {
+const fn default_max_file_size() -> u64 {
     20_000_000
 }

@@ -46,6 +46,7 @@ pub async fn start_container(state: &Arc<AppState>, language: &str) -> Result<()
         ..Default::default()
     };
 
+    #[allow(clippy::cast_possible_truncation)]
     let container_config = Config {
         image: Some(image.as_str()),
         user: Some("1000:1000"),
@@ -55,6 +56,10 @@ pub async fn start_container(state: &Arc<AppState>, language: &str) -> Result<()
         working_dir: Some("/tmp/"),
         host_config: Some(HostConfig {
             runtime: Some(state.config.language.runtime.clone()),
+            cpu_period: Some(100_000),
+            cpu_quota: Some((state.config.language.cpus * 100_000_f64) as i64),
+            memory: Some(state.config.language.memory),
+            memory_swap: Some(state.config.language.memory),
             ..Default::default()
         }),
         ..Default::default()
