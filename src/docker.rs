@@ -8,7 +8,7 @@ use bollard::container::{
     ListContainersOptions,
     RemoveContainerOptions,
 };
-use bollard::image::{BuildImageOptions, ListImagesOptions};
+use bollard::image::{BuildImageOptions, BuilderVersion, ListImagesOptions};
 use bollard::models::HostConfig;
 use futures_util::stream::{self, StreamExt};
 use owo_colors::OwoColorize;
@@ -108,6 +108,9 @@ pub async fn build_images(state: &Arc<AppState>) -> Result<()> {
             let build_image_options = BuildImageOptions {
                 dockerfile: "Dockerfile".to_string(),
                 t: format!("legion-{}", language),
+                version: BuilderVersion::BuilderBuildKit,
+                pull: true,
+                rm: true,
                 ..Default::default()
             };
 
@@ -136,20 +139,14 @@ pub async fn build_images(state: &Arc<AppState>) -> Result<()> {
     let languages = state.config.language.enabled.clone();
     let update_images = state.config.update_images;
 
-    let results: Result<()> = stream::iter(
+    stream::iter(
         languages
             .into_iter()
             .map(|language| tokio::spawn(build_image(state.clone(), language, update_images))),
     )
     .buffer_unordered(10)
     .collect::<Vec<_>>()
-    .await
-    .into_iter()
-    .collect::<std::result::Result<_, _>>()
-    .into_iter()
-    .collect();
-
-    results?;
+    .await;
 
     info!("{}", "Finished building images.".green());
 
