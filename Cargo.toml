@@ -8,7 +8,7 @@ rust-version = "1.76"
 
 [dependencies]
 anyhow = "1.0.72"
-owo-colors = "4.0.0"
+owo-colors = "5.0.0"
 libc = "0.2.147"
 axum = "0.7.5"
 tracing = "0.1.40"
