@@ -41,7 +41,7 @@ version = "4.2.3"
 features = ["axum_extras"]
 
 [dependencies.utoipa-swagger-ui]
-version = "7.1.0"
+version = "8.0.0"
 features = ["axum"]
 
 [dependencies.tower-http]
