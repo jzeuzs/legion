@@ -37,7 +37,7 @@ version = "0.14.0"
 features = ["toml", "yaml"]
 
 [dependencies.utoipa]
-version = "4.2.3"
+version = "5.0.0"
 features = ["axum_extras"]
 
 [dependencies.utoipa-swagger-ui]
