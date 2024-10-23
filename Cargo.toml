@@ -45,14 +45,14 @@ version = "7.1.0"
 features = ["axum"]
 
 [dependencies.tower-http]
-version = "0.5.2"
+version = "0.6.0"
 features = ["trace"]
 
 [dev-dependencies]
 http-body-util = "0.1.2"
 mime = "0.3.17"
 paste = "1.0.15"
-tower = "0.4.13"
+tower = "0.5.0"
 
 [build-dependencies]
 built = "0.7.4"
